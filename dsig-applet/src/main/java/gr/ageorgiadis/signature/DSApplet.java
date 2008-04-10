@@ -1,3 +1,19 @@
+/*
+ * Copyright 2007-2008 Anestis Georgiadis
+ *  
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and 
+ * limitations under the License.
+ */
+
 package gr.ageorgiadis.signature;
 
 import gr.ageorgiadis.security.BrowserKeyStoreFactory;
@@ -193,6 +209,7 @@ public class DSApplet extends JApplet {
 	public String getAppletInfo() {
 		return "Digital Signature Applet - " +
 			application.getString("dsig-applet.version") + "\n" +
+			"http://dsig.sourceforge.net\n" +
 			"(c) Anestis Georgiadis, 2007-2008";
 	}
 	
