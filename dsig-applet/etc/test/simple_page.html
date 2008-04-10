@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+		"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+	<head><title>Applet sample</title></head>
+	<body>
+		<script src="dsapplet.js"></script>
+		<script>
+function sign() {
+	var dsigApplet = document.getElementById("dsigApplet");
+	return dsigApplet.sign("form1");
+}
+		</script>
+  		<h1>
+  		Sample Form w/ Digital Signature:</h1>
+  		<form id="form1" name="form1" onsubmit="return sign('form1');">
+			<table>
+				<tr>
+					<td align="right">Account: </td>
+					<td>
+						<select name="account">
+							<option value="1234567890">Savings: 1234567890</option>
+							<option value="0987654321">Checked: 0987654321</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td align="right">Amount: </td>
+					<td>
+						<input type="text" name="amount" />
+					</td>
+				</tr>
+				<tr>
+					<td align="right">Plaintext (should be hidden): </td>
+					<td><input type="text" name="plaintext" value="" disabled="disabled" size="40" /></td>
+				</tr>
+				<tr>
+					<td align="right">Signature (should be hidden): </td>
+					<td><input type="text" name="signature" value="" disabled="disabled" size="40" /></td>
+				</tr>
+				<tr>
+					<td align="right">Serial Number (should be hidden): </td>
+					<td><input type="text" name="serialNumber" value="" disabled="disabled" size="40" /></td>
+				</tr>
+				<tr>
+					<td />
+					<td><input type="button" onclick="sign('form1');" value="Sign"/>
+						<input type="submit" value="Submit" />
+						<script>printAppletDeclaration(16, 16);</script>
+				</tr>
+			</table>
+		</form>
+
+  	</body>
+</html>
