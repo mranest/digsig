@@ -16,7 +16,6 @@
 
 package gr.ageorgiadis.signature;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.html.HTMLFormElement;
 import org.w3c.dom.html.HTMLInputElement;
 import org.w3c.dom.html.HTMLOptionElement;
@@ -38,7 +37,7 @@ public interface ElementHandler {
 	
 	void onHTMLSelectElement(HTMLSelectElement element);
 	
-	void onHTMLOptionElement(HTMLOptionElement element, Element selectElem);
+	void onHTMLOptionElement(HTMLOptionElement element, Object selectObject);
 	
 	void onHTMLTextAreaElement(HTMLTextAreaElement element);
 	

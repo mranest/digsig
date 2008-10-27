@@ -47,7 +47,7 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 	
 	private static final Log logger = LogFactory.getLog(XMLDSigHandler.class);
 
-	private boolean unselectedOptionIncluded = false;
+	protected boolean unselectedOptionIncluded = false;
 
 	/** Flag to control whether unselected option elements (belonging to a
 	 * select element) are included in the XMLDSig or not */
@@ -56,7 +56,7 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 		this.unselectedOptionIncluded = unselectedOptionsIncluded;
 	}
 	
-	private boolean unselectedCheckboxIncluded = true;
+	protected boolean unselectedCheckboxIncluded = true;
 	
 	/** Flag to control whether unselected checkbox elements are included in
 	 * the XMLDSig or not */
@@ -65,7 +65,7 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 		this.unselectedCheckboxIncluded = unselectedCheckboxesIncluded;
 	}
 	
-	private boolean unselectedRadioIncluded = false;
+	protected boolean unselectedRadioIncluded = false;
 	
 	/** Flag to control whether unselected radio buttons are included in the 
 	 * XMLDSig or not */
@@ -122,7 +122,9 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 				onHTMLOptionElement(optionElement, selectElem);
 			}
 		} else {
-			// Fallback to looking for child nodes named 'option'. It seems
+			// Fallback to looking for child nodes named 'option'; it seems
+			// some browsers fail to return the OPTION elements using 
+			// HTMLSelectElement.getOptions()
 			NodeList nl = element.getChildNodes();
 			for (int i=0; i<nl.getLength(); i++) {
 				Node node = nl.item(i);
@@ -137,7 +139,8 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 	}
 	
 	@Override
-	public void onHTMLOptionElement(HTMLOptionElement element, Element selectElem) {
+	public void onHTMLOptionElement(HTMLOptionElement element, Object selectObject) {
+		Element selectElem = (Element) selectObject;
 		Element optionElem = document.createElement("option");
 		optionElem.setAttribute("value", element.getValue());
 		

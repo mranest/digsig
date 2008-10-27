@@ -17,6 +17,7 @@
 package gr.ageorgiadis.signature;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,6 +26,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.security.cert.X509Certificate;
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,6 +46,7 @@ import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * The dialog box for selecting certificates (actually, key/certificate pairs)
@@ -51,6 +55,8 @@ import javax.swing.event.ListSelectionListener;
  */
 public class SelectCertificateDialog extends JDialog 
 implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
+	
+	private final boolean expirationDateChecked;
 
 	private static final long serialVersionUID = 4532062113859797702L;
 
@@ -67,6 +73,11 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 	private final Map<String, String> oidMap;
 	
 	public SelectCertificateDialog(CertificateTableModel ctm, String providerName) {
+		this(ctm, providerName, true);
+	}
+	
+	public SelectCertificateDialog(CertificateTableModel ctm, String providerName, boolean expirationDateChecked) {
+		this.expirationDateChecked = expirationDateChecked;
 		this.certificateTableModel = ctm;
 		
 		// Fill the OID map with well-known OIDs that need to be displayed
@@ -94,6 +105,8 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		certificateTable.setRowSorter(
 				new CertificateTableRowSorter(certificateTableModel));
 
+		certificateTable.getColumnModel().getColumn(2).setCellRenderer(new DateRenderer());
+		
 		// TODO Need to find a way for the dotted line of the selection to
 		// wrap the whole row, instead of the cell where the user clicked into
 		
@@ -222,10 +235,13 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource() == certificateTable) {
+			X509Certificate certificate = getSelectedX509Certificate();
 			if (e.getClickCount() == 2) {
-				setVisible(false);
+				if (	!expirationDateChecked || 
+						!isExpired(certificate.getNotAfter())) {
+					setVisible(false);
+				}
 			} else {
-				X509Certificate certificate = getSelectedX509Certificate();
 				if (certificate != null) {
 					detailsTextArea.setText(getFilteredDetails(certificate));
 					detailsTextArea.setCaretPosition(0);
@@ -274,9 +290,16 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		}
 		
 		StringBuilder sb = new StringBuilder();
+		
+		if (	expirationDateChecked && 
+				isExpired(certificate.getNotAfter())) {
+			sb.append("*** CERTIFICATE EXPIRED ***\n");
+		}
+		
 		String[] fields = certificate.getSubjectX500Principal()
 				.getName(X500Principal.RFC1779, oidMap).split(",");
 		
+		boolean valueAdded = false;
 		for (String field : fields) {
 			String[] parts = field.split("=");
 			String name = (parts.length == 2)?parts[0].trim():"";
@@ -285,7 +308,9 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 			}
 			Component c = Component.valueOf(name.toUpperCase());
 			
-			if (sb.length() > 0) {
+			if (!valueAdded) {
+				valueAdded = true;
+			} else {
 				sb.append("\n");
 			}
 			
@@ -298,11 +323,54 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 	}
 
 	public void valueChanged(ListSelectionEvent e) {
-		if (getSelectedRow() != -1) {
+		if (	getSelectedRow() != -1 &&
+				(!expirationDateChecked || !isExpired(getSelectedX509Certificate().getNotAfter()))) {
 			okButton.setEnabled(true);
 		} else {
 			okButton.setEnabled(false);
 		}
 	}
 	
+	private class DateRenderer extends DefaultTableCellRenderer {
+		private static final long serialVersionUID = 8322588573328968592L;
+		DateFormat formatter = null;
+
+		@Override
+		protected void setValue(Object value) {
+			if (formatter == null) {
+				formatter = DateFormat.getDateInstance();
+			}
+
+			if (!(value instanceof Date)) {
+				super.setValue(value);
+			} else {
+				setText(value == null ? "" : formatter.format(value));
+			}
+		}
+
+		@Override
+		public java.awt.Component getTableCellRendererComponent(JTable table,
+				Object value, boolean isSelected, boolean hasFocus, int row,
+				int column) {
+			java.awt.Component component = super.getTableCellRendererComponent(
+					table, value, isSelected, hasFocus, row, column);
+			
+			if (expirationDateChecked) {
+				boolean expired = isExpired((Date) value);
+				if (isSelected) {
+					component.setForeground(expired ? Color.WHITE : table.getSelectionForeground());
+					component.setBackground(expired ? Color.RED : table.getSelectionBackground());
+				} else {
+					component.setForeground(expired ? Color.WHITE : table.getForeground());
+					component.setBackground(expired ? Color.RED : table.getBackground());
+				}
+			}
+
+			return component;
+		}
+	}
+
+	private boolean isExpired(Date notAfter) {
+		return new Date().compareTo(notAfter) > 0;
+	}
 }

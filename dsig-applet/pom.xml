@@ -48,9 +48,9 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>commons-beanutils</groupId>
-                  <artifactId>commons-beanutils</artifactId>
+                  <artifactId>commons-beanutils-core</artifactId>
                   <version>1.7.0</version>
-                  <destFileName>commons-beanutils.jar</destFileName>
+                  <destFileName>commons-beanutils-core.jar</destFileName>
                 </artifactItem>
                 <artifactItem>
                   <groupId>commons-codec</groupId>
@@ -81,28 +81,35 @@
             </goals>
             <configuration>
               <tasks>
-                <taskdef classname="com.tonicsystems.jarjar.JarJarTask" name="jarjar">
+                <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask">
                   <classpath refid="maven.compile.classpath" />
                 </taskdef>
-                <jarjar jarfile="${project.build.directory}/dsig-applet-jarjar.jar">
-                  <fileset dir="${project.build.directory}/classes"/>
-                  <zipfileset src="${project.build.directory}/dependencies/commons-beanutils.jar" includes="**/*.class" />
+                <jarjar jarfile="${project.build.directory}/dsig-applet-complete.jar">
+                  <fileset dir="${project.build.directory}/classes" />
+                  <zipfileset src="${project.build.directory}/dependencies/commons-beanutils-core.jar" includes="**/*.class" />
                   <zipfileset src="${project.build.directory}/dependencies/commons-codec.jar" includes="**/*.class" />
                   <zipfileset src="${project.build.directory}/dependencies/commons-logging.jar" includes="**/*.class" />
                 </jarjar>
-                <signjar jar="${project.build.directory}/dsig-applet-jarjar.jar"
-                    keystore="src/main/config/keystore.jks" alias="alias" storepass="password" />
+                <signjar storepass="password" alias="alias" keystore="src/main/config/keystore.jks" jar="${project.build.directory}/dsig-applet-complete.jar" />
               </tasks>
             </configuration>
           </execution>
         </executions>
       </plugin>
     </plugins>
+    <!-- Resource filtering corrupts the PNG resources
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+    -->
   </build>
   <dependencies>
     <dependency>
       <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
+      <artifactId>commons-beanutils-core</artifactId>
       <version>1.7.0</version>
     </dependency>
     <dependency>

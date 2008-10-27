@@ -16,7 +16,6 @@
 
 package gr.ageorgiadis.signature;
 
-import org.w3c.dom.Element;
 import org.w3c.dom.html.HTMLFormElement;
 import org.w3c.dom.html.HTMLInputElement;
 import org.w3c.dom.html.HTMLOptionElement;
@@ -27,14 +26,14 @@ import org.w3c.dom.html.HTMLTextAreaElement;
  * The default implementation of the ElementHandler interface. Apart from 
  * defining a (NO-OP) implementation for each method defined in the 
  * ElementHandler, it also handles the multiplicity of HTMLInputElement
- * objects, depending on their type. Subclasses need only override that 
+ * objects, depending on their type.
  * 
- * @author ageorgiadis
+ * @author AGeorgiadis
  */
 public abstract class ElementHandlerImpl implements ElementHandler {
-
+	
 	/**
-	 * <p>Further drive the event into seperate event handler methods, based on
+	 * <p>Further drive the event into separate event handler methods, based on
 	 * the type of the HTMLInputElement found. Handling available for types:</p>
 	 * <ul>
 	 * <li>text</li>
@@ -76,18 +75,22 @@ public abstract class ElementHandlerImpl implements ElementHandler {
 		}
 	}
 
+	@Override
 	public void onHTMLFormElement(HTMLFormElement element) {
 		/* NO-OP; let the subclass define a proper action */
 	}
 
-	public void onHTMLOptionElement(HTMLOptionElement element, Element selectElem) {
+	@Override
+	public void onHTMLOptionElement(HTMLOptionElement element, Object selectObject) {
 		/* NO-OP; let the subclass define a proper action */
 	}
 
+	@Override
 	public void onHTMLSelectElement(HTMLSelectElement element) {
 		/* NO-OP; let the subclass define a proper action */
 	}
 
+	@Override
 	public void onHTMLTextAreaElement(HTMLTextAreaElement element) {
 		/* NO-OP; let the subclass define a proper action */
 	}

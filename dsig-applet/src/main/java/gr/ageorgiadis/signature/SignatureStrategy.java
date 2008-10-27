@@ -16,8 +16,10 @@
 
 package gr.ageorgiadis.signature;
 
+import gr.ageorgiadis.signature.standard.StandardStrategy;
 import gr.ageorgiadis.signature.xmldsig.XMLDSigStrategy;
 
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
@@ -45,16 +47,20 @@ public abstract class SignatureStrategy {
 	
 	public abstract String getPlaintext() throws SignatureException;
 	
-	public static SignatureStrategy getInstance(String strategy) 
+	public static SignatureStrategy getInstance(String algorithm) 
 	throws SignatureException {
-		if ("xmldsig".equalsIgnoreCase(strategy)) {
+		if ("xmldsig".equalsIgnoreCase(algorithm)) {
 			return new XMLDSigStrategy();
 		}
-		if ("debug".equalsIgnoreCase(strategy)) {
+		if ("debug".equalsIgnoreCase(algorithm)) {
 			return new DebugStrategy();
 		}
 		
-		throw new SignatureException("DSA0010");
+		try {
+			return new StandardStrategy(algorithm);
+		} catch (NoSuchAlgorithmException e) {
+			throw new SignatureException("DSA0010", e);
+		}
 	}
 	
 }

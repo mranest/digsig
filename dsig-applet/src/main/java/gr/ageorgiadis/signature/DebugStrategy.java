@@ -21,7 +21,6 @@ import java.security.cert.X509Certificate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Element;
 import org.w3c.dom.html.HTMLFormElement;
 import org.w3c.dom.html.HTMLInputElement;
 import org.w3c.dom.html.HTMLOptionElement;
@@ -118,7 +117,7 @@ public class DebugStrategy extends SignatureStrategy {
 		}
 		
 		@Override
-		public void onHTMLOptionElement(HTMLOptionElement element, Element selectElem) {
+		public void onHTMLOptionElement(HTMLOptionElement element, Object selectObject) {
 			logger.info("Option: label=" + element.getLabel() + ", value=" + element.getValue());
 		}
 		

@@ -105,6 +105,8 @@ public class FormParser {
 		protected Object traverseFormElements(HTMLFormElement formElement) {
 			handleNode(formElement);
 			
+			// Traverse form elements; this is not a deep-copy traversal
+			// (i.e. OPTION elements are not handled for SELECT elements)
 			HTMLCollection formElements = formElement.getElements();
 			for (int i=0; i<formElements.getLength(); i++) {
 				handleNode(formElements.item(i));
@@ -133,7 +135,7 @@ public class FormParser {
 				HTMLInputElement inputElement = (HTMLInputElement) node;
 				logger.debug("Found HTMLInputElement: name=" + inputElement.getName());
 				
-				if (!matchesResultElements(inputElement.getName())) {
+				if (!shouldIgnoreElement(inputElement.getName())) {
 					elementHandler.onHTMLInputElement(inputElement);
 				}
 			} else
@@ -141,28 +143,29 @@ public class FormParser {
 				HTMLSelectElement selectElement = (HTMLSelectElement) node;
 				logger.debug("Found HTMLSelectElement: name=" + selectElement.getName());
 
-				elementHandler.onHTMLSelectElement((HTMLSelectElement) node);
-			} /* else
-			if (node instanceof HTMLOptionElement) {
-				HTMLOptionElement optionElement = (HTMLOptionElement) node;
-				logger.debug("Found HTMLOptionElement: value=" + optionElement.getValue());
-
-				elementHandler.onHTMLOptionElement((HTMLOptionElement) node);
-			} */ else
+				if (!shouldIgnoreElement(selectElement.getName())) {
+					elementHandler.onHTMLSelectElement((HTMLSelectElement) node);
+				}
+			} else
 			if (node instanceof HTMLTextAreaElement) {
 				HTMLTextAreaElement textAreaElement = (HTMLTextAreaElement) node;
 				logger.debug("Found HTMLTextAreaElement: name=" + textAreaElement.getName());
 
-				elementHandler.onHTMLTextAreaElement((HTMLTextAreaElement) node);
+				if (!shouldIgnoreElement(textAreaElement.getName())) {
+					elementHandler.onHTMLTextAreaElement((HTMLTextAreaElement) node);
+				}
 			}
 			
 			return null;
 		}
 		
-		private boolean matchesResultElements(String name) {
+		private boolean shouldIgnoreElement(String name) {
 			if (name == null) {
 				return false;
 			}
+			
+			// Check against the result element names (i.e. those
+			// filled by the applet)
 			
 			if (	applet.getSerialNumberElement() != null &&
 					applet.getSerialNumberElement().equals(name)) {
@@ -174,6 +177,12 @@ public class FormParser {
 			}
 			if (	applet.getSignatureElement() != null &&
 					applet.getSignatureElement().equals(name)) {
+				return true;
+			}
+			
+			// Check against the ignored element names
+			
+			if (applet.isElementExcluded(name)) {
 				return true;
 			}
 			

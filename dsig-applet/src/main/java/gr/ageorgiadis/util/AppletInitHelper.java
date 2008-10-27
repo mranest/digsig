@@ -54,8 +54,8 @@ public class AppletInitHelper {
 					BeanUtils.setProperty(applet, descriptor.getName(), 
 							applet.getParameter(descriptor.getName()));
 				} catch (Exception e) {
-					logger.fatal("Applet Initialization Error", e);
-					throw new AppletInitException("Applet Initialization Error", e);
+					logger.fatal("Applet initialization error", e);
+					throw new AppletInitException("Applet initialization error", e);
 				}
 			}
 		}

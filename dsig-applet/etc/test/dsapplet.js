@@ -109,39 +109,83 @@ var BrowserDetect = {
 };
 BrowserDetect.init();
 
-// The official workaround for by passing the 'Press SPACEBAR or ENTER to activate and use this control'
-// message of Internet Explorer. formId is optional.
-//
-// TODO Detect whether http: or https: protocol is in use, and adjust the protocol on the pluginspage URL accordingly
-function printAppletDeclaration(width, height, formId) {
-	if (BrowserDetect.browser == 'Explorer') {
-		document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA"');
-		document.write('		codebase="http://java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"');
-		document.write('        width="' + width + '" height="' + height + '">');
-		document.write('	<param name="code" value="gr.ageorgiadis.signature.DSApplet.class" />');
-		document.write('	<param name="archive" value="../../target/dsig-applet-jarjar.jar" />');
-		document.write('	<param name="mayscript" value="true" />');
-		if (typeof formId != 'undefined') {
-			document.write('	<param name="formId" value="' + formId + '" />');
+var DSApplet = function(jarUrl) {
+	this.jarUrl = jarUrl;
+	this.protocol = (document.location.protocol == 'https:') ? 'https:' : 'http:';
+};
+
+DSApplet.prototype = {
+	setFormId: function (formId) {
+		this.formId = formId;
+	},
+	setFlags: function (flags) {
+		this.flags = flags;
+	},
+	setBackgroundColor: function (backgroundColor) {
+		this.backgroundColor = backgroundColor;
+	},
+	setPlaintextElement: function (plaintextElement) {
+		this.plaintextElement = plaintextElement;
+	},
+	setSignatureElement: function (signatureElement) {
+		this.signatureElement = signatureElement;
+	},
+	setSerialNumberElement: function (serialNumberElement) {
+		this.serialNumberElement = serialNumberElement;
+	},
+	setSerialNumberInHexadecimal: function (serialNumberInHexadecimal) {
+		this.serialNumberInHexadecimal = serialNumberInHexadecimal;
+	},
+	setSignatureAlgorithm: function (signatureAlgorithm) {
+		this.signatureAlgorithm = signatureAlgorithm;
+	},
+	setSuccessJSFunction: function (successJSFunction) {
+		this.successJSFunction = successJSFunction;
+	},
+	setErrorJSFunction: function (errorJSFunction) {
+		this.errorJSFunction = errorJSFunction;
+	},
+	setExpirationDateChecked: function (expirationDateChecked) {
+		this.expirationDateChecked = expirationDateChecked;
+	},
+	setExcludedElements: function (excludedElements) {
+		this.excludedElements = excludedElements;
+	},
+	setIncludedElements: function (includedElements) {
+		this.includedElements = includedElements;
+	},
+	setIssuerNameRegex: function (issuerNameRegex) {
+		this.issuerNameRegex = issuerNameRegex;
+	},
+	printAppletDeclaration: function (width, height) {
+		if (BrowserDetect.browser == 'Explorer') {
+			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA"');
+			document.write('		codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"');
+			document.write('        width="' + width + '" height="' + height + '">');
+			document.write('	<param name="code" value="gr.ageorgiadis.signature.DSApplet.class" />');
+			document.write('	<param name="archive" value="' + this.jarUrl + '" />');
+			document.write('	<param name="mayscript" value="true" />');
+			for (var i in this) {
+				if (typeof this[i] == 'string') {
+					document.write('	<param name="' + i + '" value="' + this[i] + '" />');
+				}
+			}
+			document.write('</object>');
+		} else {
+			document.write('<embed  id="dsigApplet" code="gr.ageorgiadis.signature.DSApplet.class" archive="' + this.jarUrl + '"');
+			document.write('        width="' + width + '" height="' + height + '"');
+			document.write('		type="application/x-java-applet;version=1.6"');
+			document.write('		pluginspage="http://java.com/en/download/index.jsp"');
+			document.write('		mayscript="true"');
+			for (var i in this) {
+				if (typeof this[i] == 'string') {
+					document.write('		' + i + '="' + this[i] + '"');
+				}
+			}
+			document.write('></embed>');
 		}
-		document.write('	<param name="flags" value="!unselectedRadioIncluded" />');
-		document.write('	<param name="plaintextElement" value="plaintext" />');
-		document.write('	<param name="serialNumberElement" value="serialNumber" />');
-		document.write('	<param name="signatureElement" value="signature" />');
-		document.write('</object>');
-	} else {
-		document.write('<embed  id="dsigApplet" code="gr.ageorgiadis.signature.DSApplet.class" archive="../../target/dsig-applet-jarjar.jar"');
-		document.write('        width="' + width + '" height="' + height + '"');
-		document.write('		type="application/x-java-applet;version=1.6"');
-		document.write('		pluginspage="http://java.com/en/download/index.jsp"');
-		document.write('		mayscript="true"');
-		if (typeof formId != 'undefined') {
-			document.write('		formId="' + formId + '"');
-		}
-		document.write('		flags="!unselectedRadioIncluded"');
-		document.write('		plaintextElement="plaintext"');
-		document.write('		serialNumberElement="serialNumber"');
-		document.write('		signatureElement="signature">');
-		document.write('</embed>');
+	},
+	signForm: function (form) {
+		return document.getElementById('dsigApplet').sign(form);
 	}
-}
+};

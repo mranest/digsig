@@ -67,7 +67,7 @@ import org.w3c.dom.Node;
 
 public class XMLDSigStrategy extends SignatureStrategy {
 	
-	private XMLDSigHandler handler = new XMLDSigHandler();
+	private final XMLDSigHandler handler = new XMLDSigHandler();
 
 	@Override
 	public ElementHandler getElementHandler() {

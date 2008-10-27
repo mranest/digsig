@@ -37,9 +37,13 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
@@ -70,10 +74,6 @@ public class DSApplet extends JApplet {
 
 	private String backgroundColor = "#FFFFFF";
 	
-	private String getBackgroundColor() {
-		return backgroundColor;
-	}
-
 	/**
 	 * Set the root panel's background color 
 	 * 
@@ -86,10 +86,6 @@ public class DSApplet extends JApplet {
 
 	private String formId = null;
 	
-	private String getFormId() {
-		return formId;
-	}
-
 	/**
 	 * Set the id of the form for which the digital signature algorithm will
 	 * be executed
@@ -103,10 +99,6 @@ public class DSApplet extends JApplet {
 
 	private String flags = null;
 	
-	private String getFlags() {
-		return flags;
-	}
-
 	/**
 	 * Set a comma-delimited list of flags, that will be passed to the 
 	 * selected SignatureStrategy
@@ -115,18 +107,15 @@ public class DSApplet extends JApplet {
 		this.flags = flags;
 	}
 
-	private String signatureStrategy = "xmldsig";
-	
-	private String getSignatureStrategy() {
-		return signatureStrategy;
-	}
+	private String signatureAlgorithm = "xmldsig";
 	
 	/**
 	 * Set the name of SignatureStrategy. Supported values  
-	 * are <code>debug</code>, <code>nameValue</code> and<code>xmldsig</code>.
+	 * are <code>debug</code>, <code>nameValue</code> and<code>xmldsig</code>,
+	 * as well as the standard signing algorithms of Java.
 	 */
-	public void setSignatureStrategy(String signatureStrategy) {
-		this.signatureStrategy = signatureStrategy;
+	public void setSignatureAlgorithm(String signatureAlgorithm) {
+		this.signatureAlgorithm = signatureAlgorithm;
 	}
 	
 	private String signatureElement;
@@ -170,6 +159,60 @@ public class DSApplet extends JApplet {
 		this.serialNumberElement = serialNumberElement;
 	}
 	
+	private boolean serialNumberInHexadecimal = false;
+	
+	public void setSerialNumberInHexadecimal(boolean serialNumberInHexadecimal) {
+		this.serialNumberInHexadecimal = serialNumberInHexadecimal;
+	}
+	
+	private String excludedElements = null;
+	
+	/**
+	 * Set the semicolon-separated list of elements to ignored
+	 * @param ignoredElements
+	 */
+	public void setExcludedElements(String excludedElements) {
+		this.excludedElements = excludedElements;
+	}
+	
+	private String includedElements = null;
+	
+	public void setIncludedElements(String includedElements) {
+		this.includedElements = includedElements;
+	}
+	
+	private Set<String> excludedElementsSet = null;
+	
+	private Set<String> includedElementsSet = null;
+
+	public boolean isElementExcluded(String element) {
+		if (excludedElementsSet == null) {
+			excludedElementsSet = new HashSet<String>();
+			
+			if (excludedElements != null) {
+				String[] names = excludedElements.split(";");
+				for (String name : names) {
+					excludedElementsSet.add(name.trim());
+				}
+			}
+		}
+		
+		if (includedElementsSet == null) {
+			includedElementsSet = new HashSet<String>();
+			
+			if (includedElements != null) {
+				String[] names = includedElements.split(";");
+				for (String name: names) {
+					includedElementsSet.add(name.trim());
+				}
+			}
+		}
+		
+		return excludedElementsSet.contains(element) ||
+			(	!includedElementsSet.isEmpty() && 
+				!includedElementsSet.contains(element));
+	}
+	
 	private String successJSFunction = null;
 	
 	public String getSuccessJSFunction() {
@@ -202,15 +245,44 @@ public class DSApplet extends JApplet {
 		this.errorJSFunction = errorFunction;
 	}
 	
+	private boolean expirationDateChecked = true;
+
+	public boolean isExpirationDateChecked() {
+		return expirationDateChecked;
+	}
+	
+	public void setExpirationDateChecked(boolean expirationDateChecked) {
+		this.expirationDateChecked = expirationDateChecked;
+	}
+	
+	private String issuerNameRegex = null;
+	
+	public String getIssuerNameRegex() {
+		return issuerNameRegex;
+	}
+	
+	public void setIssuerNameRegex(String issuerNameRegex) {
+		this.issuerNameRegex = issuerNameRegex;
+	}
+	
+	private Pattern issuerNamePattern = null;
+	
+	public Pattern getIssuerNamePattern() {
+		return issuerNamePattern;
+	}
+	
+	public void setIssuerNamePattern(Pattern issuerNamePattern) {
+		this.issuerNamePattern = issuerNamePattern;
+	}
+	
 	private ResourceBundle messages = ResourceBundle.getBundle("messages");
 	private ResourceBundle application = ResourceBundle.getBundle("application");
 	
 	@Override
 	public String getAppletInfo() {
 		return "Digital Signature Applet - " +
-			application.getString("dsig-applet.version") + "\n" +
-			"http://dsig.sourceforge.net\n" +
-			"(c) Anestis Georgiadis, 2007-2008";
+			application.getString("dsig-applet.version") +
+			"\nhttp://dsig.sourceforge.net";
 	}
 	
 	private UserAgentHelper userAgentHelper = new UserAgentHelper();
@@ -224,11 +296,11 @@ public class DSApplet extends JApplet {
 		
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-		panel.setBackground(Color.decode(getBackgroundColor()));
+		panel.setBackground(Color.decode(backgroundColor));
 		add(panel);	
 		
 		boolean lockPrinted = false;
-		if (getFormId() != null) {
+		if (formId != null) {
 			Icon lockIcon = new ImageIcon(getClass().getResource("/icons/lock.png"));
 			lockPrinted = true;
 			
@@ -236,7 +308,7 @@ public class DSApplet extends JApplet {
 			button.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					try {
-						signInternal(getFormId());
+						signInternal(formId);
 					} catch (Exception ex) { }
 				}
 			});
@@ -262,6 +334,17 @@ public class DSApplet extends JApplet {
 	public void init() {
 		super.init();
 
+		// Set the default java.logging logger for FINEST logging on
+		// gr.ageorgiadis package when debug system property is set
+		if (Boolean.getBoolean("debug")) {
+			System.out.println("\n*** Debug log enabled ***");
+			
+			Logger.getLogger("").getHandlers()[0].setLevel(Level.FINEST);
+			Logger.getLogger("").setLevel(Level.INFO);
+			
+			Logger.getLogger("gr.ageorgiadis").setLevel(Level.FINEST);
+		}
+		
 		// Applet initialization through the AppletInitHelper auxiliary class //
 		AppletInitHelper.init(this);
 		
@@ -281,6 +364,25 @@ public class DSApplet extends JApplet {
 		} catch (JSException e) { 
 			e.printStackTrace();
 		}
+		
+		// IssuerName regex initialization ---------------------------------- //
+		if (getIssuerNameRegex() != null) {
+			setIssuerNamePattern(Pattern.compile(getIssuerNameRegex()));
+		}
+	}
+	
+	@Override
+	public void start() {
+		// Add a small delay before printing the status; otherwise it will
+		// be overriden by the '..Applet started' Plug-In message
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try { Thread.sleep(500); } catch (InterruptedException e) { }
+				showStatus("Digital Signature Applet - " +
+						application.getString("dsig-applet.version"));
+			}
+		}).start();
 	}
 	
 	public boolean sign(final String formId) {
@@ -310,6 +412,17 @@ public class DSApplet extends JApplet {
 
 			Set<String> aliases = ksh.aliases();
 			for (String alias : aliases) {
+				X509Certificate certificate = ksh.getX509CertificateChain(alias)[0];
+				String subjectName = certificate.getSubjectX500Principal().getName();
+				
+				String issuerName = certificate.getIssuerX500Principal().getName();
+				if (	issuerNamePattern == null ||
+						!issuerNamePattern.matcher(issuerName).matches()) {
+					logger.info("Issuer does not match; skipping" +
+							": subject.name=" + subjectName);
+					continue;
+				}
+				
 				if (!ksh.isKeyEntry(alias)) {
 					continue;
 				}
@@ -319,27 +432,27 @@ public class DSApplet extends JApplet {
 
 			SelectCertificateDialog scd = new SelectCertificateDialog(
 					new CertificateTableModel(aliasX509CertificateChainPair),
-					ks.getProvider().getName());
+					ks.getProvider().getName(),
+					isExpirationDateChecked());
 			
 			scd.setModalityType(ModalityType.APPLICATION_MODAL);
 			scd.setVisible(true);
 			
 			String alias = scd.getSelectedAlias();
 			if (alias == null) {
-				throw new RuntimeException("No certificate selected");
+				// throw new RuntimeException("No certificate selected");
+				return;
 			}
 
-			SignatureStrategy strategy = SignatureStrategy.getInstance(getSignatureStrategy());
-			strategy.setFlags(getFlags());
+			SignatureStrategy strategy = SignatureStrategy.getInstance(signatureAlgorithm);
+			strategy.setFlags(flags);
 			strategy.setPrivateKey(ksh.getPrivateKey(alias, null));
 			strategy.setX509Certificate(scd.getSelectedX509Certificate());
 			
 			FormParser parser = new FormParser(this, formId);
 			parser.setElementHandler(strategy.getElementHandler());
 
-			DOMService service = DOMService.getService(this);
-			logger.info("Invoking FormParser.getParsingDOMAction(): " +
-					service.invokeAndWait(parser.getParsingDOMAction()));
+			DOMService.getService(this).invokeAndWait(parser.getParsingDOMAction());
 			
 			JSObject win = JSObject.getWindow(DSApplet.this);
 			
@@ -353,10 +466,12 @@ public class DSApplet extends JApplet {
 				logger.warn("plaintextElement not set");
 			}
 			
+			String serialNumberAsString = serialNumberInHexadecimal ?
+					HexStringHelper.toHexString(scd.getSelectedX509Certificate().getSerialNumber().toByteArray()) :
+					"" + scd.getSelectedX509Certificate().getSerialNumber();
 			if (getSerialNumberElement() != null) {
 				String command = getDOMExpression(formId, getSerialNumberElement()) + ".value = '" + 
-						HexStringHelper.toHexString(scd.getSelectedX509Certificate().getSerialNumber().toByteArray()) + 
-						"';";
+						serialNumberAsString + "';";
 
 				win.eval(command);
 			} else {
@@ -374,10 +489,8 @@ public class DSApplet extends JApplet {
 			if (getSuccessJSFunction() != null) {
 				win.eval(getSuccessJSFunction() + "();");
 			} else {
-				logger.info("successJSFunction not set");
+				logger.debug("successJSFunction not set");
 			}
-			
-			logger.info("Signature process completed");
 			
 			return;
 		} catch (KeyStoreException ex) {
@@ -404,6 +517,8 @@ public class DSApplet extends JApplet {
 			handleError(ex.getErrorCode(), ex.getCause());
 		} catch (MalformedException ex) {
 			handleError("DSA9999", ex);
+		} catch (RuntimeException ex) {
+			handleError("DSA9999", ex);
 		}
 	}
 	
@@ -412,11 +527,12 @@ public class DSApplet extends JApplet {
 		sb.append(getAppletInfo());
 		sb.append("\n\n");
 		
-		sb.append(System.getProperty("java.vm.name") + " (build " + System.getProperty("java.vm.version") + "), " + System.getProperty("java.vm.vendor") + "\n");
+		sb.append(System.getProperty("java.vm.name") + "; " + System.getProperty("java.vm.version") + ", " + System.getProperty("java.vm.vendor") + "\n");
 
 		sb.append("\nOS detected: " + System.getProperty("os.name") + " " + System.getProperty("os.arch") + " ("+ System.getProperty("os.version") + ")\n");
 		sb.append("Browser detected: " + userAgentHelper.getBrowser() + "\n");
 		sb.append("Security Provider: " + BrowserKeyStoreFactory.getInstance().getProviderName(userAgentHelper) + "\n");
+		sb.append("Signature Strategy: " + signatureAlgorithm + "\n");
 		sb.append("\nIcons provided by: FAMFAMFAM\n");
 
 		return sb.toString();
@@ -434,9 +550,13 @@ public class DSApplet extends JApplet {
 		JSObject win = JSObject.getWindow(DSApplet.this);
 		if (getErrorJSFunction() != null) {
 			win.eval(getErrorJSFunction() + "(" + errorCode + ");");
+		} else {
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
 		}
-		
-		throw new RuntimeException(cause);
 	}
 	
 }

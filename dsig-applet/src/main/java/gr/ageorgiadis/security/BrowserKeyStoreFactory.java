@@ -1,16 +1,16 @@
 /*
  * Copyright 2007-2008 Anestis Georgiadis
- *  
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and 
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
@@ -55,13 +55,13 @@ import sun.security.pkcs11.SunPKCS11;
  * variables, as required. The target is to have the KeyStore object that
  * can look-up the certificates stored in the browser currently running the
  * applet.
- * 
+ *
  * Design Patterns: Singleton
- * 
+ *
  * @author AGeorgiadis
  */
 public class BrowserKeyStoreFactory {
-	
+
 	private static final Log logger = LogFactory.getLog(BrowserKeyStoreFactory.class);
 
 	private static BrowserKeyStoreFactory instance = null;
@@ -78,30 +78,31 @@ public class BrowserKeyStoreFactory {
 			return null;
 		}
 	}
-	
+
 	private BrowserKeyStoreFactory() { }
-	
+
 	public static BrowserKeyStoreFactory getInstance() {
 		if (instance == null) {
 			instance = new BrowserKeyStoreFactory();
 		}
-		
+
 		return instance;
 	}
-	
-	public KeyStore createKeyStore(BrowserHelper browserHelper) 
+
+	public KeyStore createKeyStore(BrowserHelper browserHelper)
 	throws KeyStoreException, NoSuchProviderException, NoSuchAlgorithmException, CertificateException, IOException, MalformedException {
 		KeyStore ks = null;
-		
+
 		switch (browserHelper.getBrowser()) {
 		case Safari:
-			// TODO
-			
+			ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
+			ks.load(null, null);
+
 			break;
 		case Msie:
 			ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
 			ks.load(null, null);
-			
+
 			break;
 		case Mozilla:
 			Map<MozillaAttribute, String> attributeMap = getMozillaAttributeMap();
@@ -113,12 +114,12 @@ public class BrowserKeyStoreFactory {
 					break;
 				}
 			}
-			
+
 			if (!providerRegistered) {
 				Provider p = getMozillaProvider(attributeMap);
 				Security.addProvider(p);
 			}
-			
+
 			ks = KeyStore.getInstance("PKCS11-NSSCrypto");
 			ks.load(new KeyStore.LoadStoreParameter() {
 				public ProtectionParameter getProtectionParameter() {
@@ -126,22 +127,22 @@ public class BrowserKeyStoreFactory {
 							new PasswordEntryCallbackHandler());
 				}
 			});
-			
+
 			break;
 		default:
-			// TDODO 
-			
+			// TDODO
+
 			break;
 		}
-		
+
 		return ks;
 	}
-	
+
 	private enum MozillaAttribute {
 		NssLibraryDirectory,
 		NssSecmodDirectory
 	}
-	
+
 	private Map<MozillaAttribute, String> getMozillaAttributeMap()
 	throws IOException, MalformedException {
 		Map<MozillaAttribute, String> attributeMap = new HashMap<MozillaAttribute, String>();
@@ -151,13 +152,13 @@ public class BrowserKeyStoreFactory {
 		// Moreover, in that path resides a compatibility.ini file, containing
 		// a LastPlatformDir entry. This is the path for initializing the
 		// nssLibraryDirectory File object.
-		
+
 		// TODO If StartWithLastProfile=0, or more than one profiles exist,
 		// try to find the active profile
-		
+
 		File nssLibraryPath = null;
 		File nssSecmodPath = null;
-		
+
 		File firefoxProfilesPath = null;
 		if (System.getProperty("os.name").startsWith("Windows")) {
 			String envDataPath = System.getenv("APPDATA");
@@ -169,7 +170,7 @@ public class BrowserKeyStoreFactory {
 			throw new UnsupportedOperationException("Usupported OS: os.name=" +
 					System.getProperty("os.name"));
 		}
-		
+
 		FileInputStream fis = new FileInputStream(
 				new File(firefoxProfilesPath, "profiles.ini"));
 		ProfileIniContentHandler fich = new ProfileIniContentHandler();
@@ -177,65 +178,65 @@ public class BrowserKeyStoreFactory {
 		p.setContentHandler(fich);
 		p.parse(fis);
 		String defaultProfilePath = fich.getDefaultProfilePath();
-		
+
 		if (fich.isRelative()) {
 			nssSecmodPath = new File(firefoxProfilesPath, defaultProfilePath);
 		} else {
 			nssSecmodPath = new File(defaultProfilePath);
 		}
-		
+
 		fis = new FileInputStream(
 				new File(nssSecmodPath, "compatibility.ini"));
 		CompatibilityIniContentHandler cich = new CompatibilityIniContentHandler();
 		p = new Parser();
 		p.setContentHandler(cich);
 		p.parse(fis);
-		
+
 		nssLibraryPath = new File(cich.getLastPlatformDir());
-		
-		String nssLibraryDirectory = nssLibraryPath.getAbsolutePath();
-		System.out.println("Setting nssLibraryDirectory to: " + nssLibraryDirectory);
+
+		String nssLibraryDirectory = nssLibraryPath.getAbsolutePath().replace("\\", "/");
+		logger.info("Setting nssLibraryDirectory to: " + nssLibraryDirectory);
 		attributeMap.put(MozillaAttribute.NssLibraryDirectory, nssLibraryDirectory);
-		
-		String nssSecmodDirectory = "\"" + nssSecmodPath.getAbsolutePath() +  "\"";
+
+		String nssSecmodDirectory = "\"" + nssSecmodPath.getAbsolutePath().replace("\\", "/") +  "\"";
 		logger.info("Setting nssSecmodDirectory to: " + nssSecmodDirectory);
 		attributeMap.put(MozillaAttribute.NssSecmodDirectory, nssSecmodDirectory);
 
 		return attributeMap;
 	}
-	
+
 	private Provider getMozillaProvider(Map<MozillaAttribute, String> attributeMap) {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		PrintStream ps = new PrintStream(baos);
-		
+
 		ps.println("name = NSSCrypto");
 		ps.println("nssLibraryDirectory = " + attributeMap.get(MozillaAttribute.NssLibraryDirectory));
 		ps.println("nssSecmodDirectory = " + attributeMap.get(MozillaAttribute.NssSecmodDirectory));
 		ps.close();
-		
+
 		return new SunPKCS11(new ByteArrayInputStream(baos.toByteArray()));
 	}
-	
+
 	/**
 	 * Our pre-defined ContentHandler implementation for retrieving <b>
-	 * the default configuration of Firefox</b>. 
-	 * 
+	 * the default configuration of Firefox</b>.
+	 *
 	 * @author AGeorgiadis
 	 */
 	public static class ProfileIniContentHandler implements ContentHandler {
-		
+
 		private boolean defaultProfile = false;
 		private boolean relative = false;
 		private String defaultProfilePath = null;
-		
+
 		public boolean isRelative() {
 			return relative;
 		}
-		
+
 		public String getDefaultProfilePath() {
 			return defaultProfilePath;
 		}
-		
+
 		public void onEntry(String name, String value) {
 			if ("Name".equals(name)) {
 				defaultProfile = "default".equals(value);
@@ -251,17 +252,17 @@ public class BrowserKeyStoreFactory {
 		public void onSection(String sectionName) { /* NO-OP */ }
 
 		public void onStart() { /* NO-OP */ }
-		
+
 	}
-	
+
 	public static class CompatibilityIniContentHandler implements ContentHandler {
 
 		private String lastPlatformDir = null;
-		
+
 		public String getLastPlatformDir() {
 			return lastPlatformDir;
 		}
-		
+
 		public void onEntry(String name, String value) {
 			if ("LastPlatformDir".equals(name)) {
 				lastPlatformDir = value;
@@ -273,9 +274,9 @@ public class BrowserKeyStoreFactory {
 		public void onSection(String sectionName) { /* NO-OP */ }
 
 		public void onStart() { /* NO-OP */ }
-		
+
 	}
-	
+
 	public static class PasswordEntryCallbackHandler implements CallbackHandler {
 
 		public void handle(Callback[] callbacks) throws IOException,
@@ -289,7 +290,7 @@ public class BrowserKeyStoreFactory {
 				}
 			}
 		}
-		
+
 	}
-	
+
 }

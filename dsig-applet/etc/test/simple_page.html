@@ -1,18 +1,19 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
 		"http://www.w3.org/TR/html4/strict.dtd">
 <html>
-	<head><title>Applet sample</title></head>
-	<body>
-		<script src="dsapplet.js"></script>
-		<script>
-function sign() {
-	var dsigApplet = document.getElementById("dsigApplet");
-	return dsigApplet.sign("form1");
-}
+	<head>
+		<title>Applet sample</title>
+		<script type="text/javascript" src="dsapplet.js"> </script>
+		<script type="text/javascript">
+		function signForm(form) {
+			return document.getElementById('dsigApplet').sign(form);
+		}
 		</script>
+	</head>
+	<body>
   		<h1>
   		Sample Form w/ Digital Signature:</h1>
-  		<form id="form1" name="form1" onsubmit="return sign('form1');">
+  		<form id="form1" name="form1" onsubmit="return signForm('form1')">
 			<table>
 				<tr>
 					<td align="right">Account: </td>
@@ -30,6 +31,12 @@ function sign() {
 					</td>
 				</tr>
 				<tr>
+					<td align="right">File: </td>
+					<td>
+						<input type="file" name="file" />
+					</td>
+				</tr>
+				<tr>
 					<td align="right">Plaintext (should be hidden): </td>
 					<td><input type="text" name="plaintext" value="" disabled="disabled" size="40" /></td>
 				</tr>
@@ -42,13 +49,40 @@ function sign() {
 					<td><input type="text" name="serialNumber" value="" disabled="disabled" size="40" /></td>
 				</tr>
 				<tr>
-					<td />
-					<td><input type="button" onclick="sign('form1');" value="Sign"/>
-						<input type="submit" value="Submit" />
-						<script>printAppletDeclaration(16, 16);</script>
+					<td></td>
+					<td>
+						<script>
+							var dsapplet = new DSApplet('../../target/dsig-applet-complete.jar');
+							dsapplet.setSignatureAlgorithm('SHA1withRSA');
+							dsapplet.setFlags('!unselectedRadioIncluded');
+							dsapplet.setPlaintextElement('plaintext');
+							dsapplet.setSerialNumberElement('serialNumber');
+							dsapplet.setSignatureElement('signature');
+							dsapplet.setIssuerNameRegex('.*Adacom.*');
+							// dsapplet.setIncludedElements('account');
+						</script>
+						<input name="sign" type="button" onclick="if (dsapplet.signForm('form1')) { this.disabled = true; }" value="Sign"/>
+						<input name="subm" type="submit" value="Submit" />
+						<script>
+							dsapplet.printAppletDeclaration(16, 16);
+						</script>
+						<!--script>printAppletDeclaration(16, 16);</script-->
+						<!--script src="http://java.com/js/deployJava.js"></script>
+						<script>
+							var attributes = {code:'gr.ageorgiadis.signature.DSApplet.class',
+											  archive:'../../target/dsig-applet-complete.jar',
+											  width:16, height:16};
+							var parameters = {signatureAlgorithm:'SHA1withRSA',
+											  flags:'!unselectedRadioIncluded',
+											  plaintextElement:'plaintext',
+											  serialNumberElement:'serialNumber',
+											  signatureElement:'signature',
+											  mayscript:'mayscript'};
+							var version = '1.6.0';
+							deployJava.runApplet(attributes, parameters, version);
+						</script-->
 				</tr>
 			</table>
 		</form>
-
   	</body>
 </html>
