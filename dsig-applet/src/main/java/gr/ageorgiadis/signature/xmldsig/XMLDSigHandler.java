@@ -153,9 +153,16 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLTextAreaElement(HTMLTextAreaElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Textarea element is empty; element.name=" + name);
+			return;
+		}
+
 		Element textareaElem = document.createElement("textarea");
-		textareaElem.setAttribute("name", element.getName());
-		CDATASection cdataSection = document.createCDATASection(element.getValue());
+		textareaElem.setAttribute("name", name);
+		CDATASection cdataSection = document.createCDATASection(value);
 		textareaElem.appendChild(cdataSection);
 		
 		document.getDocumentElement().appendChild(textareaElem);
@@ -171,6 +178,13 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLInputButtonElement(HTMLInputElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Button input element is empty; element.name=" + name);
+			return;
+		}
+
 		Element buttonElem = handleHTMLInputElement(element);
 		
 		buttonElem.setAttribute("name", element.getName());
@@ -203,7 +217,8 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 		
 		// If no file has been selected, don't bother with the 
 		// message digest
-		if (filename.trim().length() == 0) {
+		if (filename == null || filename.trim().length() == 0) {
+			logger.warn("File input element is empty; element.name=" + element.getName());
 			return;
 		}
 		
@@ -234,10 +249,17 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLInputPasswordElement(HTMLInputElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Password input element is empty; element.name=" + name);
+			return;
+		}
+
 		Element passwordElem = handleHTMLInputElement(element);
 		
-		passwordElem.setAttribute("name", element.getName());
-		passwordElem.setAttribute("value", element.getValue());
+		passwordElem.setAttribute("name", name);
+		passwordElem.setAttribute("value", value);
 		
 		document.getDocumentElement().appendChild(passwordElem);
 	}
@@ -260,16 +282,30 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 
 	@Override
 	public void onHTMLInputSubmitElement(HTMLInputElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Submit input element is empty; element.name=" + name);
+			return;
+		}
+
 		Element submitElem = handleHTMLInputElement(element);
 		
-		submitElem.setAttribute("name", element.getName());
-		submitElem.setAttribute("value", element.getValue());
+		submitElem.setAttribute("name", name);
+		submitElem.setAttribute("value", value);
 		
 		document.getDocumentElement().appendChild(submitElem);
 	}
 	
 	@Override
 	public void onHTMLInputTextElement(HTMLInputElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Text input element is empty; element.name=" + name);
+			return;
+		}
+
 		Element textElem = handleHTMLInputElement(element);
 		
 		textElem.setAttribute("name", element.getName());
@@ -280,10 +316,17 @@ public class XMLDSigHandler extends ElementHandlerImpl {
 
 	@Override
 	public void onHTMLInputHiddenElement(HTMLInputElement element) {
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Hidden input element is empty; element.name=" + name);
+			return;
+		}
+
 		Element hiddenElem = handleHTMLInputElement(element);
 		
-		hiddenElem.setAttribute("name", element.getName());
-		hiddenElem.setAttribute("value", element.getValue());
+		hiddenElem.setAttribute("name", name);
+		hiddenElem.setAttribute("value", value);
 		
 		document.getDocumentElement().appendChild(hiddenElem);
 	}

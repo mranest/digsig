@@ -390,7 +390,9 @@ public class DSApplet extends JApplet {
 			// Run the signing process in the Event-Dispatch thread of Swing
 			SwingUtilities.invokeAndWait(new Runnable() {
 				public void run() {
-					signInternal(formId);
+					if (!signInternal(formId)) {
+						throw new RuntimeException("So that catch() below is invoked");
+					}
 				}
 			});
 			return true;
@@ -399,7 +401,7 @@ public class DSApplet extends JApplet {
 		}	
 	}
 	
-	private void signInternal(final String formId) throws RuntimeException {
+	private boolean signInternal(final String formId) throws RuntimeException {
 		try {
 			final KeyStoreHelper ksh;
 			final Map<String, X509Certificate[]> aliasX509CertificateChainPair = 
@@ -416,7 +418,7 @@ public class DSApplet extends JApplet {
 				String subjectName = certificate.getSubjectX500Principal().getName();
 				
 				String issuerName = certificate.getIssuerX500Principal().getName();
-				if (	issuerNamePattern == null ||
+				if (	issuerNamePattern != null &&
 						!issuerNamePattern.matcher(issuerName).matches()) {
 					logger.info("Issuer does not match; skipping" +
 							": subject.name=" + subjectName);
@@ -440,8 +442,7 @@ public class DSApplet extends JApplet {
 			
 			String alias = scd.getSelectedAlias();
 			if (alias == null) {
-				// throw new RuntimeException("No certificate selected");
-				return;
+				return false;
 			}
 
 			SignatureStrategy strategy = SignatureStrategy.getInstance(signatureAlgorithm);
@@ -492,7 +493,7 @@ public class DSApplet extends JApplet {
 				logger.debug("successJSFunction not set");
 			}
 			
-			return;
+			return true;
 		} catch (KeyStoreException ex) {
 			handleError("DSA0001", ex);
 		} catch (NoSuchProviderException ex) {
@@ -520,6 +521,8 @@ public class DSApplet extends JApplet {
 		} catch (RuntimeException ex) {
 			handleError("DSA9999", ex);
 		}
+		
+		return false;
 	}
 	
 	private String printInfoMessage() {

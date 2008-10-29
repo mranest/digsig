@@ -161,7 +161,14 @@ public class StandardHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLTextAreaElement(HTMLTextAreaElement element) {
-		sortedFormData.put(element.getName(), element.getValue());
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Textarea element is empty; element.name=" + name);
+			return;
+		}
+
+		sortedFormData.put(name, value);
 	}
 	
 	@Override
@@ -186,7 +193,7 @@ public class StandardHandler extends ElementHandlerImpl {
 		
 		// If no file has been selected, don't bother with the 
 		// message digest
-		if (filename.trim().length() == 0) {
+		if (filename == null || filename.trim().length() == 0) {
 			logger.warn("File input element is empty; element.name=" + element.getName());
 			return;
 		}
@@ -218,7 +225,14 @@ public class StandardHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLInputPasswordElement(HTMLInputElement element) {
-		sortedFormData.put(element.getName(), element.getValue());
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Password input element is empty; element.name=" + name);
+			return;
+		}
+
+		sortedFormData.put(name, value);
 	}
 	
 	@Override
@@ -239,12 +253,26 @@ public class StandardHandler extends ElementHandlerImpl {
 	
 	@Override
 	public void onHTMLInputTextElement(HTMLInputElement element) {
-		sortedFormData.put(element.getName(), element.getValue());
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Text input element is empty; element.name=" + name);
+			return;
+		}
+
+		sortedFormData.put(name, value);
 	}
 	
 	@Override
 	public void onHTMLInputHiddenElement(HTMLInputElement element) {
-		sortedFormData.put(element.getName(), element.getValue());
+		String name = element.getName();
+		String value = element.getValue();
+		if (value == null || value.trim().length() == 0) {
+			logger.warn("Hidden input element is empty; element.name=" + name);
+			return;
+		}
+
+		sortedFormData.put(name, value);
 	}
 	
 }
