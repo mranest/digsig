@@ -66,6 +66,17 @@ import com.sun.java.browser.dom.DOMAccessException;
 import com.sun.java.browser.dom.DOMService;
 import com.sun.java.browser.dom.DOMUnsupportedException;
 
+/**
+ * <p>Known issues:</p>
+ * <ul>
+ * <li>File upload fields don't pass the full filename from the value field
+ * on Firefox 3.0</li>
+ * <li>Null/empty values are by default excluded; configure this behavior
+ * globally</li>
+ * </ul>
+ * 
+ * @author ageorgiadis
+ */
 public class DSApplet extends JApplet {
 	
 	private static final Log logger = LogFactory.getLog(DSApplet.class);
