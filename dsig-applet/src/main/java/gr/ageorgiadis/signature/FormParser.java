@@ -96,7 +96,14 @@ public class FormParser {
 				// by convention we will return an Exception object, and the
 				// code spawning using this DOMAction will retrieve it and throw
 				// it, in case an Exception instance is returned
-				return new IllegalArgumentException("Id: " + formId + " does not exist or is not bound to a form element");
+				//
+				// "...Revisiting this topic, and quoting the Javadoc for the
+				// invokeAndWait(DOMAction): Note that if the DOMAction.run() 
+				// method throws an uncaught exception (on the DOM action 
+				// dispatching thread), it's caught and re-thrown, as an 
+				// DOMAccessException, on the caller's thread". In which case,
+				// throw the IllegalArgumentException
+				throw new IllegalArgumentException("Id: " + formId + " does not exist or is not bound to a form element");
 			}
 			
 			return traverseFormElements((HTMLFormElement) formElement);
