@@ -79,6 +79,8 @@ import com.sun.java.browser.dom.DOMUnsupportedException;
  */
 public class DSApplet extends JApplet {
 	
+	private static final String DSAPPLET_VERSION = "1.1.1-20081202";
+	
 	private static final Log logger = LogFactory.getLog(DSApplet.class);
 
 	private static final long serialVersionUID = 3617857231362031733L;
@@ -286,13 +288,14 @@ public class DSApplet extends JApplet {
 		this.issuerNamePattern = issuerNamePattern;
 	}
 	
-	private ResourceBundle messages = ResourceBundle.getBundle("messages");
-	private ResourceBundle application = ResourceBundle.getBundle("application");
+	// Only lookup .properties files
+	private ResourceBundle messages = ResourceBundle.getBundle("messages",
+			ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES));
 	
 	@Override
 	public String getAppletInfo() {
 		return "Digital Signature Applet - " +
-			application.getString("dsig-applet.version") +
+			DSAPPLET_VERSION +
 			"\nhttp://dsig.sourceforge.net";
 	}
 	
@@ -344,7 +347,7 @@ public class DSApplet extends JApplet {
 	@Override
 	public void init() {
 		super.init();
-
+		
 		// Set the default java.logging logger for FINEST logging on
 		// gr.ageorgiadis package when debug system property is set
 		if (Boolean.getBoolean("debug")) {
@@ -391,7 +394,7 @@ public class DSApplet extends JApplet {
 			public void run() {
 				try { Thread.sleep(500); } catch (InterruptedException e) { }
 				showStatus("Digital Signature Applet - " +
-						application.getString("dsig-applet.version"));
+						DSAPPLET_VERSION);
 			}
 		}).start();
 	}
