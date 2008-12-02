@@ -69,6 +69,13 @@ public class StandardHandler extends ElementHandlerImpl {
 		this.unselectedRadioIncluded = unselectedRadioIncluded;
 	}
 	
+	protected boolean emptyElementsIncluded = false;
+	
+	public void setEmptyElementsIncluded(boolean emptyElementsIncluded) {
+		logger.debug("Setting emptyElementsIncluded to: " + emptyElementsIncluded);
+		this.emptyElementsIncluded = emptyElementsIncluded;
+	}
+	
 	protected String equality = DEFAULT_EQUALITY;
 	
 	public void setEquality(String equality) {
@@ -87,7 +94,7 @@ public class StandardHandler extends ElementHandlerImpl {
 		this.urlEncoded = urlEncoded;
 	}
 	
-	/** The map of form data that comprise the signable data */
+	/** The map of form data that comprise the data to sign */
 	private final Map<String, String> sortedFormData = new TreeMap<String, String>();
 
 	public StandardHandler() {
@@ -151,7 +158,7 @@ public class StandardHandler extends ElementHandlerImpl {
 			HTMLOptionElement element,
 			Object selectObject) {
 		String name = (String) selectObject;
-		String value = sortedFormData.get(name);
+		String value = adjustNullOrEmptyValues(sortedFormData.get(name));
 		boolean selected = element.getSelected();
 
 		if (selected) {
@@ -162,9 +169,9 @@ public class StandardHandler extends ElementHandlerImpl {
 	@Override
 	public void onHTMLTextAreaElement(HTMLTextAreaElement element) {
 		String name = element.getName();
-		String value = element.getValue();
-		if (value == null || value.trim().length() == 0) {
-			logger.debug("Textarea element is empty; element.name=" + name);
+		String value = adjustNullOrEmptyValues(element.getValue());
+		if (value == null) {
+			logger.warn("Skipping empty textarea element; element.name=" + name);
 			return;
 		}
 
@@ -192,9 +199,18 @@ public class StandardHandler extends ElementHandlerImpl {
 		String filename = element.getValue();
 		
 		// If no file has been selected, don't bother with the 
-		// message digest
+		// message digest ...
+		// ... but do bother with including it in the plaintext, having
+		// an empty value
 		if (filename == null || filename.trim().length() == 0) {
-			logger.debug("File input element is empty; element.name=" + element.getName());
+			if (emptyElementsIncluded) {
+				sortedFormData.put(
+						element.getName(), 
+						"");
+			} else {
+				logger.warn("Skipping empty file input element; element.name=" + element.getName());
+			}
+			
 			return;
 		}
 		
@@ -226,9 +242,9 @@ public class StandardHandler extends ElementHandlerImpl {
 	@Override
 	public void onHTMLInputPasswordElement(HTMLInputElement element) {
 		String name = element.getName();
-		String value = element.getValue();
-		if (value == null || value.trim().length() == 0) {
-			logger.debug("Password input element is empty; element.name=" + name);
+		String value = adjustNullOrEmptyValues(element.getValue());
+		if (value == null) {
+			logger.warn("Skipping empty password input element; element.name=" + name);
 			return;
 		}
 
@@ -254,9 +270,9 @@ public class StandardHandler extends ElementHandlerImpl {
 	@Override
 	public void onHTMLInputTextElement(HTMLInputElement element) {
 		String name = element.getName();
-		String value = element.getValue();
-		if (value == null || value.trim().length() == 0) {
-			logger.debug("Text input element is empty; element.name=" + name);
+		String value = adjustNullOrEmptyValues(element.getValue());
+		if (value == null) {
+			logger.warn("Skipping empty text input element; element.name=" + name);
 			return;
 		}
 
@@ -266,13 +282,22 @@ public class StandardHandler extends ElementHandlerImpl {
 	@Override
 	public void onHTMLInputHiddenElement(HTMLInputElement element) {
 		String name = element.getName();
-		String value = element.getValue();
-		if (value == null || value.trim().length() == 0) {
-			logger.debug("Hidden input element is empty; element.name=" + name);
+		String value = adjustNullOrEmptyValues(element.getValue());
+		if (value == null) {
+			logger.warn("Skipping empty hidden input element; element.name=" + name);
 			return;
 		}
 
 		sortedFormData.put(name, value);
+	}
+	
+	private String adjustNullOrEmptyValues(String value) {
+		if (	(value == null || value.length() == 0) && 
+				emptyElementsIncluded) {
+			return "";
+		} else {
+			return value;
+		}
 	}
 	
 }
