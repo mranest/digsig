@@ -193,6 +193,15 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		}
 	}
 	
+	public void valueChanged(ListSelectionEvent e) {
+		if (	getSelectedRow() != -1 &&
+				(!expirationDateChecked || !isExpired(getSelectedX509Certificate().getNotAfter()))) {
+			okButton.setEnabled(true);
+		} else {
+			okButton.setEnabled(false);
+		}
+	}
+	
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource() == okButton) {
 			setVisible(false);
@@ -220,34 +229,51 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
             if (e.getSource() == cancelButton) {
             	certificateTable.clearSelection();
             }
-            setVisible(false);
+            if (okButton.isEnabled()) {
+            	setVisible(false);
+            }
     		break;
         }		
 	}
 
 	public void keyReleased(KeyEvent e) {
-		// NO-OP
+		switch (e.getKeyCode()) {
+    	case KeyEvent.VK_UP:
+    	case KeyEvent.VK_DOWN:
+    	case KeyEvent.VK_ENTER:	// Handled here because an enter event that
+    							// normally advances the selected line in the
+    							// table
+    		X509Certificate certificate = getSelectedX509Certificate();
+    		updateDetailsTextArea(certificate);
+    		break;
+		}
 	}
 
 	public void keyTyped(KeyEvent e) {
 		// NO-OP
 	}
+	
+	private void updateDetailsTextArea(X509Certificate certificate) {
+		if (certificate != null) {
+			detailsTextArea.setText(getFilteredDetails(certificate));
+			detailsTextArea.setCaretPosition(0);
+			
+			if (	expirationDateChecked && 
+					isExpired(certificate.getNotAfter())) {
+				
+			}
+		} else {
+			detailsTextArea.setText("No Key/Certificate pair selected.");
+		}
+	}
 
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource() == certificateTable) {
 			X509Certificate certificate = getSelectedX509Certificate();
-			if (e.getClickCount() == 2) {
-				if (	!expirationDateChecked || 
-						!isExpired(certificate.getNotAfter())) {
-					setVisible(false);
-				}
+			if (e.getClickCount() == 2 && okButton.isEnabled()) {
+				setVisible(false);
 			} else {
-				if (certificate != null) {
-					detailsTextArea.setText(getFilteredDetails(certificate));
-					detailsTextArea.setCaretPosition(0);
-				} else {
-					detailsTextArea.setText("No Key/Certificate pair selected.");
-				}
+				updateDetailsTextArea(certificate);
 			}
 		}
 	}
@@ -322,15 +348,6 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		return sb.toString();
 	}
 
-	public void valueChanged(ListSelectionEvent e) {
-		if (	getSelectedRow() != -1 &&
-				(!expirationDateChecked || !isExpired(getSelectedX509Certificate().getNotAfter()))) {
-			okButton.setEnabled(true);
-		} else {
-			okButton.setEnabled(false);
-		}
-	}
-	
 	private class DateRenderer extends DefaultTableCellRenderer {
 		private static final long serialVersionUID = 8322588573328968592L;
 		DateFormat formatter = null;
