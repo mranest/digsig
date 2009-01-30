@@ -132,7 +132,7 @@
     <dependency>
       <groupId>sun.plugin</groupId>
       <artifactId>plugin</artifactId>
-      <version>1.6.0_05</version>
+      <version>1.6.0.11</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
