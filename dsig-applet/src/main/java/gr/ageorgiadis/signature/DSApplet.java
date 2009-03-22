@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -79,7 +80,7 @@ import com.sun.java.browser.dom.DOMUnsupportedException;
  */
 public class DSApplet extends JApplet {
 	
-	private static final String DSAPPLET_VERSION = "1.1.1-20081202";
+	private static final String DSAPPLET_VERSION = "1.2.0-SNAPSHOT";
 	
 	private static final Log logger = LogFactory.getLog(DSApplet.class);
 
@@ -264,6 +265,12 @@ public class DSApplet extends JApplet {
 		return expirationDateChecked;
 	}
 	
+	/**
+	 * <p>Set the flag to enable the expiration date checking; default value
+	 * is true</p>
+	 * @param expirationDateChecked true to expiration date checking; false
+	 * otherwise
+	 */
 	public void setExpirationDateChecked(boolean expirationDateChecked) {
 		this.expirationDateChecked = expirationDateChecked;
 	}
@@ -274,20 +281,66 @@ public class DSApplet extends JApplet {
 		return issuerNameRegex;
 	}
 	
+	/**
+	 * <p>Set the regular expression to use for matching the issuer name; if
+	 * that is set then the issuer name is checked against the issuer of each
+	 * certificate found, and only if it matches will the certificate be 
+	 * eligible for use
+	 * @param issuerNameRegex a regular expression for matching the issuer
+	 */
 	public void setIssuerNameRegex(String issuerNameRegex) {
 		this.issuerNameRegex = issuerNameRegex;
 	}
 	
 	private Pattern issuerNamePattern = null;
 	
-	public Pattern getIssuerNamePattern() {
+	private Pattern getIssuerNamePattern() {
+		if (issuerNamePattern == null && issuerNameRegex != null) {
+			issuerNamePattern = Pattern.compile(issuerNameRegex);
+		}
+		
 		return issuerNamePattern;
 	}
 	
-	public void setIssuerNamePattern(Pattern issuerNamePattern) {
-		this.issuerNamePattern = issuerNamePattern;
+	private String subjectNameRegex = null;
+	
+	public void setSubjectNameRegex(String subjectNameRegex) {
+		logger.info("Setting SubjectNameRegex to: " + subjectNameRegex);
+		this.subjectNameRegex = subjectNameRegex;
 	}
 	
+	private String subjectFriendlyRegex = null;
+	
+	public void setSubjectFriendlyRegex(String subjectFriendlyRegex) {
+		logger.info("Setting SubjectFriendlyRegex to: " + subjectFriendlyRegex);
+		this.subjectFriendlyRegex = subjectFriendlyRegex;
+	}
+	
+	/**
+	 * An optional list of serial numbers to be allowed for selection. If it
+	 * is not null then the serialNumbersAllowedSet is created.
+	 */
+	private String serialNumbersAllowed = null;
+	
+	public void setSerialNumbersAllowed(String serialNumbersAllowed) {
+		this.serialNumbersAllowed = serialNumbersAllowed;
+	}
+	
+	private Set<BigInteger> serialNumbersAllowedSet = null;
+
+	public Set<BigInteger> getSerialNumbersAllowedSet() {
+		if (	serialNumbersAllowedSet == null &&
+				serialNumbersAllowed != null) {
+			String[] serialNumbers = serialNumbersAllowed.split(",");
+			serialNumbersAllowedSet = new HashSet<BigInteger>();
+			for (String serialNumber: serialNumbers) {
+				serialNumbersAllowedSet.add(new BigInteger(serialNumber));
+			}
+		}
+		
+		return serialNumbersAllowedSet;
+	}
+
 	// Only lookup .properties files
 	private ResourceBundle messages = ResourceBundle.getBundle("messages",
 			ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES));
@@ -378,11 +431,6 @@ public class DSApplet extends JApplet {
 		} catch (JSException e) { 
 			e.printStackTrace();
 		}
-		
-		// IssuerName regex initialization ---------------------------------- //
-		if (getIssuerNameRegex() != null) {
-			setIssuerNamePattern(Pattern.compile(getIssuerNameRegex()));
-		}
 	}
 	
 	@Override
@@ -429,15 +477,32 @@ public class DSApplet extends JApplet {
 			Set<String> aliases = ksh.aliases();
 			for (String alias : aliases) {
 				X509Certificate certificate = ksh.getX509CertificateChain(alias)[0];
-				String subjectName = certificate.getSubjectX500Principal().getName();
 				
+				String subjectName = certificate.getSubjectX500Principal().getName();
 				String issuerName = certificate.getIssuerX500Principal().getName();
-				if (	issuerNamePattern != null &&
-						!issuerNamePattern.matcher(issuerName).matches()) {
+				BigInteger serialNumber = certificate.getSerialNumber();
+
+				// Filter by issuer name
+				
+				if (	getIssuerNamePattern() != null &&
+						!getIssuerNamePattern().matcher(issuerName).matches()) {
 					logger.info("Issuer does not match; skipping" +
-							": subject.name=" + subjectName);
+							": certificate.subject=" + subjectName +
+							", certificate.serialNumber=" + serialNumber);
 					continue;
 				}
+				
+				// Filter by serial number
+				
+				if (	getSerialNumbersAllowedSet() != null &&
+						!getSerialNumbersAllowedSet().contains(serialNumber)) {
+					logger.info("Serial number is not allowed; skipping" + 
+							": certificate.subject=" + subjectName +
+							", certificate.serialNumber=" + serialNumber);
+					continue;
+				}
+				
+				// Filter by private key
 				
 				if (!ksh.isKeyEntry(alias)) {
 					continue;
@@ -447,7 +512,10 @@ public class DSApplet extends JApplet {
 			}
 
 			SelectCertificateDialog scd = new SelectCertificateDialog(
-					new CertificateTableModel(aliasX509CertificateChainPair),
+					new CertificateTableModel(
+							aliasX509CertificateChainPair,
+							subjectNameRegex,
+							subjectFriendlyRegex),
 					ks.getProvider().getName(),
 					isExpirationDateChecked());
 			

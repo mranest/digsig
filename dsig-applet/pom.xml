@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>gr.ageorgiadis</groupId>
   <artifactId>dsig-applet</artifactId>
-  <version>1.1.1</version>
+  <version>1.2.0-SNAPSHOT</version>
   <description>Digital Signature Applet</description>
   <build>
     <finalName>dsig-applet</finalName>
@@ -132,7 +132,7 @@
     <dependency>
       <groupId>sun.plugin</groupId>
       <artifactId>plugin</artifactId>
-      <version>1.6.0.11</version>
+      <version>1.6.0.12</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

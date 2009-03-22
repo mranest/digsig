@@ -29,6 +29,48 @@ import javax.swing.table.AbstractTableModel;
 public class CertificateTableModel extends AbstractTableModel {
 	
 	private static final long serialVersionUID = 1821906345886093491L;
+
+//	private static final Log logger = LogFactory.getLog(CertificateTableModel.class);
+	
+	private static final String SUBJECT_NAME_REGEX_DEFAULT = ".*CN=([^,]*).*";
+	
+	private String subjectNameRegex = SUBJECT_NAME_REGEX_DEFAULT;
+	
+	public void setSubjectNameRegex(String subjectNameRegex) {
+		if (subjectNameRegex != null) {
+			this.subjectNameRegex = subjectNameRegex;
+		}
+	}
+	
+	private Pattern subjectNamePattern;
+	
+	private Pattern getSubjectNamePattern() {
+		if (subjectNamePattern == null) {
+			subjectNamePattern = Pattern.compile(subjectNameRegex); 
+		}
+		
+		return subjectNamePattern;
+	}
+	
+	private static final String SUBJECT_FRIENDLY_REGEX_DEFAULT = ".*OU=Alias - ([^,]*).*";
+	
+	private String subjectFriendlyRegex = SUBJECT_FRIENDLY_REGEX_DEFAULT;
+	
+	public void setSubjectFriendlyRegex(String subjectFriendlyRegex) {
+		if (subjectFriendlyRegex != null) {
+			this.subjectFriendlyRegex = subjectFriendlyRegex;
+		}
+	}
+	
+	private Pattern subjectFriendlyPattern;
+	
+	private Pattern getSubjectFriendlyPattern() {
+		if (subjectFriendlyPattern == null) {
+			subjectFriendlyPattern = Pattern.compile(subjectFriendlyRegex);
+		}
+		
+		return subjectFriendlyPattern;
+	}
 	
 	private final LinkedHashMap<String, X509Certificate[]> aliasX509CertificateChainMap;
 	
@@ -37,6 +79,15 @@ public class CertificateTableModel extends AbstractTableModel {
 			new LinkedHashMap<String, X509Certificate[]>(aliasX509CertificateChainMap);
 	}
 
+	public CertificateTableModel(
+			Map<String, X509Certificate[]> aliasX509CertificateChainMap,
+			String subjectNameRegex,
+			String subjectFriendlyRegex) {
+		this(aliasX509CertificateChainMap);
+		setSubjectNameRegex(subjectNameRegex);
+		setSubjectFriendlyRegex(subjectFriendlyRegex);
+	}
+	
 	public Class<?> getColumnClass(int columnIndex) {
 		return String.class;
 	}
@@ -48,11 +99,11 @@ public class CertificateTableModel extends AbstractTableModel {
 	public String getColumnName(int columnIndex) {
 		switch (columnIndex) {
 		case 0:
-			return "Issued To";
+			return "Issued to";
 		case 1:
-			return "Issued By";
+			return "Friendly name";
 		case 2:
-			return "Expiration Date";
+			return "Expiration date";
 		default:
 			return null;
 		}
@@ -62,14 +113,12 @@ public class CertificateTableModel extends AbstractTableModel {
 		return aliasX509CertificateChainMap.size();
 	}
 	
-	private Pattern cnPattern = Pattern.compile(".*CN=([^,]*).*");
-	
-	private String getX500CN(String name) {
-		Matcher m = cnPattern.matcher(name);
+	private String getSubjectComponent(String s, Pattern p) {
+		Matcher m = p.matcher(s);
 		if (m.matches()) {
 			return m.group(1);
 		} else {
-			return name;
+			return "";
 		}
 	}
 	
@@ -83,13 +132,12 @@ public class CertificateTableModel extends AbstractTableModel {
 		X509Certificate certificate = aliasX509CertificateChainMap.get(alias)[0];
 		
 		X500Principal subjectPrincipal = certificate.getSubjectX500Principal();
-		X500Principal issuerPrincipal = certificate.getIssuerX500Principal();
 		
 		switch (columnIndex) {
 		case 0:
-			return getX500CN(subjectPrincipal.getName());
+			return getSubjectComponent(subjectPrincipal.getName(), getSubjectNamePattern());
 		case 1:
-			return getX500CN(issuerPrincipal.getName());
+			return getSubjectComponent(subjectPrincipal.getName(), getSubjectFriendlyPattern());
 		case 2:
 			return certificate.getNotAfter();
 		default:

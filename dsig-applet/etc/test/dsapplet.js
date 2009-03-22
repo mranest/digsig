@@ -157,6 +157,15 @@ DSApplet.prototype = {
 	setIssuerNameRegex: function (issuerNameRegex) {
 		this.issuerNameRegex = issuerNameRegex;
 	},
+	setSubjectNameRegex: function (subjectNameRegex) {
+		this.subjectNameRegex = subjectNameRegex;
+	},
+	setSubjectFriendlyRegex: function (subjectFriendlyRegex) {
+		this.subjectFriendlyRegex = subjectFriendlyRegex;
+	},
+	setSerialNumbersAllowed: function (serialNumbersAllowed) {
+		this.serialNumbersAllowed = serialNumbersAllowed;
+	},
 	printAppletDeclaration: function (width, height) {
 		if (BrowserDetect.browser == 'Explorer') {
 			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-0000-ABCDEFFEDCBA"');

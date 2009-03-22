@@ -58,8 +58,11 @@
 							dsapplet.setPlaintextElement('plaintext');
 							dsapplet.setSerialNumberElement('serialNumber');
 							dsapplet.setSignatureElement('signature');
-							// dsapplet.setIssuerNameRegex('.*Adacom.*');
+							// dsapplet.setIssuerNameRegex('.*O=EFG Eurobank Ergasias S.A.*');
 							// dsapplet.setIncludedElements('account');
+							dsapplet.setSerialNumbersAllowed('156978806403274170299588351757177801547');
+							// dsapplet.setSubjectNameRegex('.*OU=([^,]*).*');
+							// dsapplet.setSubjectFriendlyRegex('.*OU=([^,]*).*');
 						</script>
 						<input name="sign" type="button" onclick="if (dsapplet.signForm('form1')) { this.disabled = true; }" value="Sign"/>
 						<input name="subm" type="submit" value="Submit" />
