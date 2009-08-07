@@ -8,9 +8,9 @@
 -injars      target/dependencies/slf4j-jdk14.jar(**.class)
 -injars      target/dependencies/jcl-over-slf4j.jar(**.class)
 -outjars     target/dsig-applet-complete.jar
--libraryjars C:/Users/mranest/opt/jdk1.6.0_14/jre/lib/rt.jar
--libraryjars C:/Users/mranest/opt/jdk1.6.0_14/jre/lib/plugin.jar
--libraryjars C:/Users/mranest/opt/jdk1.6.0_14/jre/lib/ext/sunpkcs11.jar
+-libraryjars C:/Users/mranest/opt/jdk1.6.0_15/jre/lib/rt.jar
+-libraryjars C:/Users/mranest/opt/jdk1.6.0_15/jre/lib/plugin.jar
+-libraryjars C:/Users/mranest/opt/jdk1.6.0_15/jre/lib/ext/sunpkcs11.jar
 -dontskipnonpubliclibraryclasses
 -ignorewarnings
 -dontobfuscate
