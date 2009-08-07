@@ -57,12 +57,16 @@
 					<td><input type="text" name="serialNumber" value="" disabled="disabled" size="40" /></td>
 				</tr>
 				<tr>
+					<td align="right">Keygen: </td>
+					<td><keygen type="hidden" name="public_key" value="" /></td>
+				</tr>
+				<tr>
 					<td></td>
 					<td>
 						<script>
 							var dsapplet = new DSApplet('../../../target/dsig-applet-complete.jar');
 							dsapplet.setFormId('');
-							dsapplet.setSubjectMatchingRegex('.*OU=ERMIS_78566025.*');
+							// dsapplet.setSubjectMatchingRegex('.*OU=ERMIS_78566025.*');
 						</script>
 						<input name="sign" type="button" onclick="if (dsapplet.signForm('form1')) { this.disabled = true; }" value="Sign"/>
 						<input name="subm" type="submit" value="Submit" />

@@ -29,7 +29,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
-import java.text.MessageFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,14 +84,12 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 	
 	public SelectCertificateDialog(
 			CertificateTableModel ctm, 
-			String providerName,
 			ResourceBundle messages) {
-		this(ctm, providerName, true, messages);
+		this(ctm, true, messages);
 	}
 	
 	public SelectCertificateDialog(
 			CertificateTableModel ctm, 
-			String providerName, 
 			boolean expirationDateChecked,
 			ResourceBundle messages) {
 		this.certificateTableModel = ctm;
@@ -197,9 +194,7 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		
 		getRootPane().setDefaultButton(okButton);
 		
-		setTitle(MessageFormat.format(
-				this.messages.getString(TITLE),
-				providerName));
+		setTitle(this.messages.getString(TITLE));
 		setResizable(false);
 		pack();
 	}

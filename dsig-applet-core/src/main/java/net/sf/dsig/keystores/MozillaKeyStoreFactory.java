@@ -23,12 +23,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.ProviderException;
 import java.security.Security;
 import java.security.KeyStore.ProtectionParameter;
-import java.security.cert.CertificateException;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -36,7 +34,6 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.swing.JOptionPane;
 
-import net.sf.dsig.KeyStoreFactory;
 import net.sf.dsig.LiveConnectProxy;
 import net.sf.dsig.helpers.IniContentHandler;
 import net.sf.dsig.helpers.IniParser;
@@ -50,26 +47,15 @@ import sun.security.pkcs11.SunPKCS11;
 /**
  * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
-public class MozillaKeyStoreFactory extends KeyStoreFactory {
+public class MozillaKeyStoreFactory implements KeyStoreFactory {
 	
 	private static final Log logger = LogFactory.getLog(MozillaKeyStoreFactory.class);
 
-	public MozillaKeyStoreFactory() {
-		super(null);
-	}
-	
-	public MozillaKeyStoreFactory(KeyStoreFactory next) {
-		super(next);
-	}
-	
 	/**
-	 * @throws IOException 
-	 * @throws CertificateException 
-	 * @throws NoSuchAlgorithmException 
-	 * @see net.sf.dsig.KeyStoreFactory#getKeyStoreInternal()
+	 * @see net.sf.dsig.keystores.KeyStoreFactory#getKeyStore()
 	 */
 	@Override
-	protected KeyStore getKeyStoreInternal() throws Exception {
+	public KeyStore getKeyStore() throws Exception {
 		UserAgentParser uap = new UserAgentParser(
 				LiveConnectProxy.getSingleton().getUserAgent());
 		

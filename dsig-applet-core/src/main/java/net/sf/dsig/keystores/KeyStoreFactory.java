@@ -18,20 +18,8 @@ package net.sf.dsig.keystores;
 
 import java.security.KeyStore;
 
-/**
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
-public class MscapiKeyStoreFactory implements KeyStoreFactory {
+public interface KeyStoreFactory {
 
-	/**
-	 * @see net.sf.dsig.keystores.KeyStoreFactory#getKeyStore()
-	 */
-	@Override
-	public KeyStore getKeyStore() throws Exception {
-		KeyStore ks = KeyStore.getInstance("Windows-MY", "SunMSCAPI");
-		ks.load(null, null);
-		
-		return ks;
-	}
+	KeyStore getKeyStore() throws Exception;
 	
 }

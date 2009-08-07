@@ -19,8 +19,7 @@ package net.sf.dsig;
 import java.util.Properties;
 
 import junit.framework.Assert;
-
-import net.sf.dsig.keystores.Pkcs11KeyStoreFactory;
+import net.sf.dsig.keystores.KeyStoreProxyFactory;
 
 import org.junit.Test;
 
@@ -32,23 +31,23 @@ public class EnvironmentTest {
 		p.load(getClass().getResourceAsStream("/indexedSettings.properties"));
 		Environment.getSingleton().setProperties(p);
 		
-		Pkcs11KeyStoreFactory pksf = new Pkcs11KeyStoreFactory();
-		Environment.getSingleton().init(pksf);
+		KeyStoreProxyFactory kspf = new KeyStoreProxyFactory();
+		Environment.getSingleton().init(kspf);
 		
-		Assert.assertNotNull(pksf.getPkcs11Name());
-		Assert.assertNotNull(pksf.getPkcs11Library());
-		Assert.assertEquals(2, pksf.getPkcs11Name().length);
-		Assert.assertEquals(2, pksf.getPkcs11Library().length);
+		Assert.assertNotNull(kspf.getPkcs11Name());
+		Assert.assertNotNull(kspf.getPkcs11Library());
+		Assert.assertEquals(2, kspf.getPkcs11Name().length);
+		Assert.assertEquals(2, kspf.getPkcs11Library().length);
 		
 		p.load(getClass().getResourceAsStream("/simpleSettings.properties"));
 		Environment.getSingleton().setProperties(p);
 
-		Environment.getSingleton().init(pksf);
+		Environment.getSingleton().init(kspf);
 		
-		Assert.assertNotNull(pksf.getPkcs11Name());
-		Assert.assertNotNull(pksf.getPkcs11Library());
-		Assert.assertEquals(1, pksf.getPkcs11Name().length);
-		Assert.assertEquals(1, pksf.getPkcs11Library().length);
+		Assert.assertNotNull(kspf.getPkcs11Name());
+		Assert.assertNotNull(kspf.getPkcs11Library());
+		Assert.assertEquals(1, kspf.getPkcs11Name().length);
+		Assert.assertEquals(1, kspf.getPkcs11Library().length);
 	}
 	
 }

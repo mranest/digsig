@@ -23,7 +23,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.math.BigInteger;
-import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
@@ -46,10 +45,11 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
-import net.sf.dsig.helpers.KeyStoreHelper;
 import net.sf.dsig.helpers.KeyUsageHelper;
 import net.sf.dsig.helpers.UserHomeSettingsParser;
 import net.sf.dsig.impl.StaticStrategyFactory;
+import net.sf.dsig.keystores.KeyStoreProxy;
+import net.sf.dsig.keystores.KeyStoreProxyFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -323,6 +323,8 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
+	private boolean started = false;
+	
 	@Override
 	public void start() {
 		// Add a small delay before printing the status; otherwise it will
@@ -337,6 +339,8 @@ public class DSApplet extends JApplet {
 				}
 			}).start();
 		}
+		
+		started = true;
 	}
 
 	public boolean sign(final String formId) {
@@ -356,14 +360,16 @@ public class DSApplet extends JApplet {
 	}
 	
 	public boolean signInternal(String formId) {
-		KeyStoreFactory ksf = KeyStoreFactory.createKeyStoreFactoryChain();
-		KeyStore ks = null;
-		KeyStoreHelper ksh = null;
+		if (!started) {
+			return false;
+		}
+		
+		KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
+		Environment.getSingleton().init(factory);
+		
+		KeyStoreProxy ksh = null;
 		try {
-			ks = ksf.getKeyStore();
-			ksh = new KeyStoreHelper(ks);
-
-			logger.debug("KeyStore object created; provider.name=" + ks.getProvider().getName());
+			ksh = factory.createKeyStoreProxy();
 		} catch (Exception e) {
 			handleError("DSA0001", e);
 		}
@@ -451,7 +457,6 @@ public class DSApplet extends JApplet {
 		
 		SelectCertificateDialog scd = new SelectCertificateDialog(
 				ctm,
-				ks.getProvider().getName(),
 				expirationDateChecked,
 				messages);
 		
@@ -465,7 +470,7 @@ public class DSApplet extends JApplet {
 
 		PrivateKey privateKey = null;
 		try {
-			privateKey = ksh.getPrivateKey(alias, null);
+			privateKey = ksh.getPrivateKey(alias);
 		} catch (Exception e) {
 			handleError("DSA0003", e);
 		}
