@@ -54,6 +54,7 @@ import org.bouncycastle.ocsp.SingleResp;
  * A helper class that encapsulates OCSP checking logic
  * 
  * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
+ * @see <a href="http://forums.sun.com/thread.jspa?threadID=5133153">OCSP Client</a>
  */
 public class OCSPHelper {
 
