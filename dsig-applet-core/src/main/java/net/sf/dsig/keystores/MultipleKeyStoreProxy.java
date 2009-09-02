@@ -31,12 +31,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MultipleKeyStoreProxy implements KeyStoreProxy {
 
-	private static final Log LOG = LogFactory.getLog(MultipleKeyStoreProxy.class);
+	private static final Logger LOGGER = 
+			LoggerFactory.getLogger(MultipleKeyStoreProxy.class);
 	
 	private static final String SUN_MSCAPI_KEY_STORE_CLASS = "sun.security.mscapi.KeyStore";
 	
@@ -56,7 +57,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		BigInteger serialNumber = proxy.getX509Certificate().getSerialNumber();
 		
 		if (serialNumbersAdded.contains(serialNumber)) {
-			LOG.debug("Tried to add duplicate certificate; skipping; serialNumber=" + serialNumber);
+			LOGGER.debug("Tried to add duplicate certificate; skipping; serialNumber=" + serialNumber);
 
 			return false;
 		}

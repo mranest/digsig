@@ -17,6 +17,7 @@
 package net.sf.dsig;
 
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,14 +28,15 @@ import java.util.regex.Pattern;
 import javax.security.auth.x500.X500Principal;
 import javax.swing.table.AbstractTableModel;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CertificateTableModel extends AbstractTableModel {
 	
 	private static final long serialVersionUID = 1821906345886093491L;
 
-	private static final Log logger = LogFactory.getLog(CertificateTableModel.class);
+	private static final Logger logger = 
+			LoggerFactory.getLogger(CertificateTableModel.class);
 	
 	private static final String ISSUED_TO = "certificateTableModel.issuedTo";
 	private static final String FRIENDLY_NAME = "certificateTableModel.friendlyName";
@@ -90,6 +92,28 @@ public class CertificateTableModel extends AbstractTableModel {
 	}
 	
 	private final LinkedHashMap<String, X509Certificate[]> aliasX509CertificateChainMap;
+	
+	public int getCertificateCount() {
+		return aliasX509CertificateChainMap.values().size();
+	}
+	
+	private boolean isExpired(Date notAfter) {
+		return new Date().compareTo(notAfter) > 0;
+	}
+	
+	public int getValidCertificateCount() {
+		int validCount = 0;
+		
+		for (X509Certificate[] certificateChain: aliasX509CertificateChainMap.values()) {
+			X509Certificate certificate = certificateChain[0];
+			Date notAfter = certificate.getNotAfter();
+			if (!isExpired(notAfter)) {
+				validCount++;
+			}
+		}
+		
+		return validCount;
+	}
 	
 	private final ResourceBundle messages;
 	

@@ -26,8 +26,8 @@ import java.security.KeyStore.ProtectionParameter;
 
 import net.sf.dsig.keystores.MozillaKeyStoreFactory.PasswordEntryCallbackHandler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import sun.security.pkcs11.SunPKCS11;
 
@@ -36,7 +36,8 @@ import sun.security.pkcs11.SunPKCS11;
  */
 public class Pkcs11KeyStoreFactory implements KeyStoreFactory {
 
-	private static final Log LOG = LogFactory.getLog(Pkcs11KeyStoreFactory.class);
+	private static final Logger LOGGER = 
+			LoggerFactory.getLogger(Pkcs11KeyStoreFactory.class);
 	
 	private final String name;
 	
@@ -78,7 +79,7 @@ public class Pkcs11KeyStoreFactory implements KeyStoreFactory {
 		ps.close();
 
 		String configuration = new String(baos.toByteArray()); 
-		LOG.debug("SunPKCS11 configuration:\n" + configuration);
+		LOGGER.debug("SunPKCS11 configuration:\n" + configuration);
 		
 		return configuration;
 	}

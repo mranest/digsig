@@ -150,7 +150,7 @@ DSApplet.prototype = {
 	},
 	printAppletDeclaration: function (width, height) {
 		if (BrowserDetect.browser == 'Explorer') {
-			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-FFFF-FFFF-ABCDEFFEDCBA"');
+			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-FFFF-ABCDEFFEDCBA"');
 			document.write('		codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"');
 			document.write('        width="' + width + '" height="' + height + '">');
 			document.write('	<param name="code" value="net.sf.dsig.DSApplet.class" />');

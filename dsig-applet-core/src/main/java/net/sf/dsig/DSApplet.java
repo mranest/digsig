@@ -51,8 +51,8 @@ import net.sf.dsig.impl.StaticStrategyFactory;
 import net.sf.dsig.keystores.KeyStoreProxy;
 import net.sf.dsig.keystores.KeyStoreProxyFactory;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.LoggerFactory;
+import org.slf4j.profiler.Profiler;
 
 import com.sun.java.browser.dom.DOMService;
 
@@ -63,9 +63,16 @@ public class DSApplet extends JApplet {
 
 	private static final long serialVersionUID = -7671795492911882803L;
 
-	private static final Log logger = LogFactory.getLog(DSApplet.class);
+	private static final org.slf4j.Logger logger = 
+			LoggerFactory.getLogger(DSApplet.class);
 	
 	private static final String DSAPPLET_VERSION = "2.0-SNAPSHOT";
+	
+	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
+	
+	static {
+		initProfiler.start("Initializing");
+	}
 	
 	/**
 	 * The background color of the applet
@@ -290,12 +297,14 @@ public class DSApplet extends JApplet {
 		super.init();
 		
 		// Environment initialization --------------------------------------- //
+		initProfiler.start("Environment init");
 		Environment.getSingleton().setApplet(this);
 		Environment.getSingleton().setProperties(
 				UserHomeSettingsParser.parse());
 		
 		// Set the default java.logging logger for FINEST logging on
 		// gr.ageorgiadis package when debug environmental parameter is set
+		initProfiler.start("Logging init");
 		if (Boolean.parseBoolean(Environment.getSingleton().getValue("debug"))) {
 			System.out.println("\n*** Debug log enabled ***");
 			
@@ -306,12 +315,14 @@ public class DSApplet extends JApplet {
 		}
 
 		// Applet initialization through the Environment class -------------- //
+		initProfiler.start("Applet init");
 		Environment.getSingleton().init(this);
 		
 		// LiveConnect proxy initialization --------------------------------- //
 		LiveConnectProxy.getSingleton().setApplet(this);
 		
 		// Swing initialization --------------------------------------------- //
+		initProfiler.start("Swing init");
 		try {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				public void run() {
@@ -321,6 +332,8 @@ public class DSApplet extends JApplet {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		initProfiler.start("Starting");
 	}
 	
 	private boolean started = false;
@@ -341,6 +354,10 @@ public class DSApplet extends JApplet {
 		}
 		
 		started = true;
+		
+		initProfiler.setLogger(logger);
+		
+		initProfiler.stop().log();
 	}
 
 	public boolean sign(final String formId) {
@@ -356,13 +373,22 @@ public class DSApplet extends JApplet {
 			return true;
 		} catch (Exception e) {
 			return false;
-		}	
+		} finally {
+			
+		}
 	}
 	
 	public boolean signInternal(String formId) {
+		Profiler profiler = new Profiler("SIGNATURE");
+		profiler.setLogger(logger);
+		
+		try { // Only for the purpose of stopping the Profiler on final 
+			
 		if (!started) {
 			return false;
 		}
+		
+		profiler.start("Keystore creation");
 		
 		KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
 		Environment.getSingleton().init(factory);
@@ -377,6 +403,8 @@ public class DSApplet extends JApplet {
 		Map<String, X509Certificate[]> aliasX509CertificateChainPair = 
 				new HashMap<String, X509Certificate[]>();
 
+		profiler.start("Keypair filtering");
+		
 		try {
 			Set<String> aliases = ksh.aliases();
 			for (String alias : aliases) {
@@ -450,6 +478,8 @@ public class DSApplet extends JApplet {
 			handleError("DSA0002", e);
 		}
 		
+		profiler.start("User selection");
+		
 		CertificateTableModel ctm = new CertificateTableModel(
 					aliasX509CertificateChainPair,
 					messages);
@@ -482,6 +512,8 @@ public class DSApplet extends JApplet {
 			handleError("DSA0004", e);
 		}
 		
+		profiler.start("HTML form parsing");
+		
 		Strategy strategy = strategyFactory.getStrategy();
 		
 		FormParser parser = new FormParser(this, formId);
@@ -492,6 +524,8 @@ public class DSApplet extends JApplet {
 		} catch (Exception e) {
 			handleError("DSA0005", e);
 		}
+		
+		profiler.start("Signature strategy");
 		
 		try {
 			strategy.sign(privateKey, certificateChain);
@@ -506,6 +540,10 @@ public class DSApplet extends JApplet {
 		}
 		
 		return true;
+		
+		} finally {
+			profiler.stop().log();
+		}
 	}
 	
 	@Override

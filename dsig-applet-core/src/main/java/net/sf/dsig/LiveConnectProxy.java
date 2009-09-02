@@ -18,11 +18,12 @@ package net.sf.dsig;
 
 import javax.swing.JApplet;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import sun.plugin.dom.DOMService;
 
 import com.sun.java.browser.dom.DOMAccessException;
@@ -38,7 +39,8 @@ import com.sun.java.browser.dom.DOMUnsupportedException;
  */
 public class LiveConnectProxy {
 	
-	private static final Log logger = LogFactory.getLog(LiveConnectProxy.class);
+	private static final Logger logger = 
+			LoggerFactory.getLogger(LiveConnectProxy.class);
 
 	private static final String MSIE_USER_AGENT_DEFAULT = 
 		"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)";

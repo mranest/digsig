@@ -22,12 +22,13 @@ import java.security.KeyStore;
 import net.sf.dsig.LiveConnectProxy;
 import net.sf.dsig.helpers.UserAgentParser;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class KeyStoreProxyFactory {
 
-	private static final Log LOG = LogFactory.getLog(KeyStoreProxyFactory.class);
+	private static final Logger LOGGER = 
+			LoggerFactory.getLogger(KeyStoreProxyFactory.class);
 	
 	// PKCS11 settings; to be set via initialization in order to drive the
 	// creation of the KeyStoreProxy object
@@ -106,7 +107,7 @@ public class KeyStoreProxyFactory {
 			
 			// Check if PKCS11 library exists
 			if (!new File(mypkcs11Library).exists()) {
-				LOG.info("PKCS11 library not set or missing" +
+				LOGGER.info("PKCS11 library not set or missing" +
 						"; name=" + myPkcs11Name +
 						", library=" + mypkcs11Library);
 
@@ -117,9 +118,9 @@ public class KeyStoreProxyFactory {
 				proxy.add(new Pkcs11KeyStoreFactory(myPkcs11Name, mypkcs11Library)
 						.getKeyStore());
 				
-				LOG.debug("Added PKCS11 KeyStore; name=" + myPkcs11Name + ", library=" + mypkcs11Library);
+				LOGGER.debug("Added PKCS11 KeyStore; name=" + myPkcs11Name + ", library=" + mypkcs11Library);
 			} catch (Exception ignored) {
-				LOG.warn("Could not initialize PKCS11 KeyStore", ignored);
+				LOGGER.warn("Could not initialize PKCS11 KeyStore", ignored);
 			}
 		}
 	}
@@ -131,9 +132,9 @@ public class KeyStoreProxyFactory {
 				proxy.add(ks);
 			}
 
-			LOG.debug("Added Mozilla KeyStore");
+			LOGGER.debug("Added Mozilla KeyStore");
 		} catch (Exception ignored) {
-			LOG.warn("Could not initialize Mozilla KeyStore", ignored);
+			LOGGER.warn("Could not initialize Mozilla KeyStore", ignored);
 		}
 	}
 	
@@ -144,9 +145,9 @@ public class KeyStoreProxyFactory {
 				proxy.add(ks);
 			}
 			
-			LOG.debug("Added MSCAPI KeyStore");
+			LOGGER.debug("Added MSCAPI KeyStore");
 		} catch (Exception ignored) {
-			LOG.warn("Could not initialize MSCAPI KeyStore", ignored);
+			LOGGER.warn("Could not initialize MSCAPI KeyStore", ignored);
 		}
 	}
 	

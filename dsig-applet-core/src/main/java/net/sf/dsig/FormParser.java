@@ -25,8 +25,8 @@ import java.security.NoSuchAlgorithmException;
 
 import net.sf.dsig.helpers.HexStringHelper;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLCollection;
@@ -51,7 +51,7 @@ import com.sun.java.browser.dom.DOMAction;
  */
 public class FormParser {
 	
-	private static final Log logger = LogFactory.getLog(FormParser.class);
+	private static final Logger logger = LoggerFactory.getLogger(FormParser.class);
 
 	/** ElementHandler interface receives the events generated while
 	 * traversing the form */

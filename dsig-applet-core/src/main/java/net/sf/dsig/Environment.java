@@ -26,8 +26,8 @@ import javax.swing.JApplet;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *  
@@ -35,7 +35,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class Environment {
 	
-	private static final Log logger = LogFactory.getLog(Environment.class);
+	private static final Logger logger = LoggerFactory.getLogger(Environment.class);
 
 	protected Environment() { }
 	

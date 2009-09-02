@@ -196,6 +196,15 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 		
 		setTitle(this.messages.getString(TITLE));
 		setResizable(false);
+		
+		// Preselect the first row, if only one valid certificate
+		// is printed
+		if (	certificateTableModel.getCertificateCount() == 1 &&
+				certificateTableModel.getValidCertificateCount() == 1) {
+			certificateTable.setRowSelectionInterval(0, 0);
+			certificateTable.setColumnSelectionInterval(0, certificateTableModel.getColumnCount()-1);
+		}
+		
 		pack();
 	}
 

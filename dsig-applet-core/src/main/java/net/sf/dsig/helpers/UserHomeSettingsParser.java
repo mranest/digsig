@@ -24,15 +24,15 @@ import java.io.InputStream;
 import java.util.Properties;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
 public class UserHomeSettingsParser {
 
-	private static final Log logger = LogFactory.getLog(UserHomeSettingsParser.class);
+	private static final Logger logger = LoggerFactory.getLogger(UserHomeSettingsParser.class);
 	
 	public static Properties parse() {
 		try {

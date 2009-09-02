@@ -39,8 +39,8 @@ import net.sf.dsig.helpers.IniContentHandler;
 import net.sf.dsig.helpers.IniParser;
 import net.sf.dsig.helpers.UserAgentParser;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import sun.security.pkcs11.SunPKCS11;
 
@@ -49,7 +49,8 @@ import sun.security.pkcs11.SunPKCS11;
  */
 public class MozillaKeyStoreFactory implements KeyStoreFactory {
 	
-	private static final Log logger = LogFactory.getLog(MozillaKeyStoreFactory.class);
+	private static final Logger logger = 
+			LoggerFactory.getLogger(MozillaKeyStoreFactory.class);
 
 	/**
 	 * @see net.sf.dsig.keystores.KeyStoreFactory#getKeyStore()

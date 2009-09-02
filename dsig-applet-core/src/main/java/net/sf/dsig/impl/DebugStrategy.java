@@ -23,8 +23,8 @@ import java.util.Arrays;
 import net.sf.dsig.FormContentHandler;
 import net.sf.dsig.Strategy;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
@@ -32,7 +32,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class DebugStrategy implements Strategy {
 
-	private static final Log logger = LogFactory.getLog(DebugStrategy.class);
+	private static final Logger logger = LoggerFactory.getLogger(DebugStrategy.class);
 	
 	/**
 	 * @see net.sf.dsig.Strategy#getFormContentHandler()
