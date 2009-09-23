@@ -23,8 +23,6 @@ import net.sf.dsig.impl.StaticStrategyFactory;
  * invoked through the {@link FormParser} class.
  * 
  * <p>A concrete implementation is provided by the {@link StaticStrategyFactory} object.
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
 public interface FormContentHandler {
 

@@ -40,8 +40,6 @@ import javax.swing.JTextArea;
 /**
  * ErrorDialog class defines the behavior for the dialog box that pops
  * up when an error occurs.
- *  
- * @author AGeorgiadis
  */
 public class ErrorDialog extends JDialog 
 implements ActionListener, KeyListener {

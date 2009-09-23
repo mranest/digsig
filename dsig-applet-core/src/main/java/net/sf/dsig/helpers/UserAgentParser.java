@@ -31,8 +31,6 @@ import java.util.regex.Pattern;
  * <li><b>MSIE</b>: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; InfoPath.1; .NET CLR 2.0.50727)
  * <li><b>Firefox on Windows</b>: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.9) Gecko/20071025 Firefox/2.0.0.9
  * <li><b>Chrome on Windows</b>:Mozilla/5.0 (Windows; U; Windows NT 6.0; en-US) AppleWebKit/530.1 (KHTML, like Gecko) Chrome/2.0.169.1 Safari/530.1
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
 public class UserAgentParser {
 

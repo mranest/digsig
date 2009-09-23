@@ -34,8 +34,6 @@ import com.sun.java.browser.dom.DOMUnsupportedException;
  * <p>This class provides auxiliary methods for utilizing the LiveConnect
  * interface exposed by the JApplet in order to access information on the
  * enclosing page.
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
 public class LiveConnectProxy {
 	

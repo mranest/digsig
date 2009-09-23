@@ -46,8 +46,6 @@ import com.sun.java.browser.dom.DOMAction;
  * provided via LiveConnect, searching at first for a specific form, and then
  * triggering certain events on a FormHandler interface, based on the type
  * of element found in the form.
- * 
- * @author AGeorgiadis
  */
 public class FormParser {
 	

@@ -26,8 +26,6 @@ import net.sf.dsig.StrategyFactory;
  * <p>The implementation of the core project is used to provide debugging
  * information only. Real implementations are found in each strategy project, e.g.
  * dsig-applet-xmldsig.
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
  */
 public class StaticStrategyFactory implements StrategyFactory {
 

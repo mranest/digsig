@@ -53,8 +53,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 /**
  * The dialog box for selecting certificates (actually, key/certificate pairs)
- * 
- * @author AGeorgiadis
  */
 public class SelectCertificateDialog extends JDialog 
 implements ActionListener, KeyListener, MouseListener, ListSelectionListener {

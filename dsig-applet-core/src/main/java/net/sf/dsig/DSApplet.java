@@ -56,9 +56,6 @@ import org.slf4j.profiler.Profiler;
 
 import com.sun.java.browser.dom.DOMService;
 
-/**
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
 public class DSApplet extends JApplet {
 
 	private static final long serialVersionUID = -7671795492911882803L;
@@ -66,7 +63,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.0-SNAPSHOT";
+	private static final String DSAPPLET_VERSION = "2.0.0-20090923";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	

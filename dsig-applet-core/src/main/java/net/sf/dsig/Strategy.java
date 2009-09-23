@@ -19,9 +19,6 @@ package net.sf.dsig;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
-/**
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
 public interface Strategy {
 
 	FormContentHandler getFormContentHandler();

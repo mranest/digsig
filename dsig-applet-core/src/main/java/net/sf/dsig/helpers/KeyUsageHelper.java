@@ -18,10 +18,6 @@ package net.sf.dsig.helpers;
 
 import java.security.cert.X509Certificate;
 
-/**
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
 public class KeyUsageHelper {
 
 	public enum KeyUsage {

@@ -18,9 +18,6 @@ package net.sf.dsig.keystores;
 
 import java.security.KeyStore;
 
-/**
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
 public class MscapiKeyStoreFactory implements KeyStoreFactory {
 
 	/**

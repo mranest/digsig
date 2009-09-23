@@ -23,9 +23,6 @@ import net.sf.dsig.impl.StaticStrategyFactory;
  * 
  * <p>The concrete implementation is always bound to the
  * {@link StaticStrategyFactory} class.
- * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- *
  */
 public interface StrategyFactory {
 

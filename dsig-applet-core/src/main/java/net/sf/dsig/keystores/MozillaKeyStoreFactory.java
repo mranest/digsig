@@ -44,9 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import sun.security.pkcs11.SunPKCS11;
 
-/**
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
- */
 public class MozillaKeyStoreFactory implements KeyStoreFactory {
 	
 	private static final Logger logger = 
