@@ -59,7 +59,7 @@ import org.w3c.dom.Element;
  * <li>includedElements - a comma-separated list of names of form elements to
  * include in the xmldsig; default is to include everything
  * 
- * @author <a href="mailto:mranest@iname.com">Anestis Georgiadis</a>
+ * @author <a href="mailto:mranest@gmail.com">Anestis Georgiadis</a>
  */
 public class XmldsigStrategy implements Strategy {
 
