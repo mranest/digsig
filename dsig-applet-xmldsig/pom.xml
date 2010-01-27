@@ -32,29 +32,43 @@
 					</execution>
 				</executions>
 			</plugin>
-      <plugin>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>obfuscate-sign</id>
-            <phase>package</phase>
-            <goals>
-              <goal>run</goal>
-            </goals>
-            <configuration>
-              <tasks>
-                <taskdef resource="proguard/ant/task.properties">
-                  <classpath refid="maven.compile.classpath" />
-                </taskdef>
-                <proguard configuration="proguard.pro" />
-                <signjar storepass="password" alias="alias" keystore="../dsig-applet-core/src/main/config/keystore.jks" jar="${project.build.directory}/dsig-applet-complete.jar" />
-              </tasks>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>proguard</id>
+			<build>
+				<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>obfuscate-sign</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<tasks>
+								<taskdef resource="proguard/ant/task.properties">
+									<classpath refid="maven.compile.classpath" />
+								</taskdef>
+								<proguard configuration="proguard.pro" />
+								<signjar storepass="password" alias="alias"
+									keystore="../dsig-applet-core/src/main/config/keystore.jks"
+									jar="${project.build.directory}/dsig-applet-complete.jar" />
+							</tasks>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+	<properties>
+		<proguard.version>4.4</proguard.version>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>net.sf.dsig</groupId>
@@ -69,7 +83,7 @@
 		<dependency>
 			<groupId>proguard</groupId>
 			<artifactId>proguard</artifactId>
-			<version>4.3</version>
+			<version>${proguard.version}</version>
 			<scope>compile</scope>
 		</dependency>
 
