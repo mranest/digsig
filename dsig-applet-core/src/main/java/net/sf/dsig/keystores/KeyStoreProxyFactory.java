@@ -65,12 +65,16 @@ public class KeyStoreProxyFactory {
 		// affects the pkcs11Name and pkcs11Library class properties
 		addPkcs11KeyStores(proxy);
 		
-		// Platform KeyStore comes next
+		// Platform KeyStore comes next; Windows first ...
 		if (System.getProperty("os.name").startsWith("Windows")) {
 			addMSCAPIKeyStore(proxy);
 		}
 		
-		// TODO Implement MacOS X support
+		// ... then MacOS X (commented out until we resolve the issues
+		// with aliased entries not always returning true for keyEntry)
+//		if (System.getProperty("os.name").startsWith("Mac OS X")) {
+//			addKeychainKeyStore(proxy);
+//		}
 		
 		// Mozilla KeyStore comes last, if browser is Mozilla-based (only 
 		// Mozilla initializes the NSS native libraries)
@@ -150,5 +154,18 @@ public class KeyStoreProxyFactory {
 			LOGGER.warn("Could not initialize MSCAPI KeyStore", ignored);
 		}
 	}
+	
+//	private void addKeychainKeyStore(MultipleKeyStoreProxy proxy) {
+//		try {
+//			KeyStore ks = new KeychainKeyStoreFactory().getKeyStore();
+//			if (ks != null) {
+//				proxy.add(ks);
+//			}
+//			
+//			LOGGER.debug("Added Keychain KeyStore");
+//		} catch (Exception ignored) {
+//			LOGGER.warn("Could not initialize Keychain KeyStore", ignored);
+//		}
+//	}
 	
 }

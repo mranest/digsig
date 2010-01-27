@@ -28,17 +28,16 @@ public interface KeyStoreProxy {
 	public Set<String> aliases() throws KeyStoreException;
 
 	public boolean isKeyEntry(String alias) 
-			throws KeyStoreException;
+	throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException;
 
 	public X509Certificate[] getX509CertificateChain(String alias)
-			throws KeyStoreException;
+	throws KeyStoreException;
 
 	public X509Certificate getX509Certificate(String alias)
-			throws KeyStoreException;
+	throws KeyStoreException;
 
 	public PrivateKey getPrivateKey(String alias)
-			throws UnrecoverableKeyException, KeyStoreException,
-			NoSuchAlgorithmException;
+	throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException;
 
 	public static class KeyStoreProxyException extends RuntimeException {
 		private static final long serialVersionUID = -6014494220664334752L;

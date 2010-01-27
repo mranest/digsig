@@ -76,14 +76,9 @@ public class MozillaKeyStoreFactory implements KeyStoreFactory {
 				p = new SunPKCS11(new ByteArrayInputStream(
 						getMozillaConfiguration(true).getBytes()));
 			} catch (ProviderException e) {
-				if (	e.getCause() != null &&
-						e.getCause().getClass().getName().equals("sun.security.pkcs11.ConfigurationException")) {
-					logger.debug("Error while instantiating SunPKCS11 provider; retrying without nssLibraryDirectory", e);
-					p = new SunPKCS11(new ByteArrayInputStream(
-							getMozillaConfiguration(false).getBytes()));
-				} else {
-					throw e;
-				}
+				logger.debug("Error while instantiating SunPKCS11 provider; retrying without nssLibraryDirectory", e);
+				p = new SunPKCS11(new ByteArrayInputStream(
+						getMozillaConfiguration(false).getBytes()));
 			}
 			Security.addProvider(p);
 		}
@@ -111,6 +106,9 @@ public class MozillaKeyStoreFactory implements KeyStoreFactory {
 		} else if (System.getProperty("os.name").startsWith("Linux")) {
 			String userHomePath = System.getProperty("user.home");
 			firefoxProfilesPath = new File(userHomePath, ".mozilla/firefox");
+		} else if (System.getProperty("os.name").startsWith("Mac OS X")) {
+			String userHomePath = System.getProperty("user.home");
+			firefoxProfilesPath = new File(userHomePath, "Library/Application Support/Firefox");
 		} else {
 			throw new UnsupportedOperationException("Usupported OS: os.name=" +
 					System.getProperty("os.name"));

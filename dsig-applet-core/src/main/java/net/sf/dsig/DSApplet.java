@@ -358,20 +358,22 @@ public class DSApplet extends JApplet {
 	}
 
 	public boolean sign(final String formId) {
-		try {
-			// Run the signing process in the Event-Dispatch thread of Swing
-			SwingUtilities.invokeAndWait(new Runnable() {
-				public void run() {
-					if (!signInternal(formId)) {
-						throw new RuntimeException("So that catch() below is invoked");
+		if (!SwingUtilities.isEventDispatchThread()) {
+			try {
+				// Run the signing process in the Event-Dispatch thread of Swing
+				SwingUtilities.invokeAndWait(new Runnable() {
+					public void run() {
+						if (!signInternal(formId)) {
+							throw new RuntimeException("So that catch() below is invoked");
+						}
 					}
-				}
-			});
-			return true;
-		} catch (Exception e) {
-			return false;
-		} finally {
-			
+				});
+				return true;
+			} catch (Exception e) {
+				return false;
+			}
+		} else {
+			return signInternal(formId);
 		}
 	}
 	

@@ -23,6 +23,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +43,14 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 	
 	private static final String SUN_MSCAPI_KEY_STORE_CLASS = "sun.security.mscapi.KeyStore";
 	
+	private static final String APPLE = "Apple";
+	
 	private Set<BigInteger> serialNumbersAdded = new HashSet<BigInteger>();
 
 	private Map<String, KeyStoreEntryProxy> aliasedEntries =
 			new HashMap<String, KeyStoreEntryProxy>();
 	
-	private boolean addAliasedEntry(KeyStoreEntryProxy proxy) throws KeyStoreException {
+	private boolean addAliasedEntry(KeyStoreEntryProxy proxy) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
 		if (proxy == null) {
 			return false;
 		}
@@ -56,19 +60,41 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		
 		BigInteger serialNumber = proxy.getX509Certificate().getSerialNumber();
 		
-		if (serialNumbersAdded.contains(serialNumber)) {
-			LOGGER.debug("Tried to add duplicate certificate; skipping; serialNumber=" + serialNumber);
-
-			return false;
+		String sameSerialNumberAlias = null;
+		for (Entry<String, KeyStoreEntryProxy> each: aliasedEntries.entrySet()) {
+			if (each.getValue().getX509Certificate().getSerialNumber().equals(serialNumber)) {
+				sameSerialNumberAlias = each.getKey();
+			}
+		}
+		
+		if (sameSerialNumberAlias != null) {
+			KeyStoreEntryProxy sameSerialNumberProxy = aliasedEntries.get(sameSerialNumberAlias);
+			
+			if (sameSerialNumberProxy.isKeyEntry()) {
+				// Same serial number proxy has a proper entry key; prefer that
+				LOGGER.debug("Tried to add duplicate certificate, and previous one has a keyEntry; skipping; alias={}, serialNumber={}", 
+						proxy.getAlias(), serialNumber);
+				
+				return false;
+			}
+		}
+		
+		if (sameSerialNumberAlias != null) {
+			aliasedEntries.remove(sameSerialNumberAlias);
+			
+			LOGGER.debug("Removed previous duplicate certificate; alias={}, serialNumber={}",
+					sameSerialNumberAlias, serialNumber);
 		}
 		
 		serialNumbersAdded.add(serialNumber);
-		aliasedEntries.put(proxy.alias(), proxy);
+		LOGGER.debug("Added certificate; alias={}, serialNumber={}", proxy.getAlias(), serialNumber);
+		
+		aliasedEntries.put(proxy.getAlias(), proxy);
 		
 		return true;
 	}
 	
-	public void addSunMSCAPIKeyStore(KeyStore keyStore) throws KeyStoreException {
+	public void addSunMSCAPIKeyStore(KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
 		// Retrieve KeyStore.keyStoreSpi
 		Object keyStoreSpi = getField(keyStore, "keyStoreSpi");
 
@@ -83,7 +109,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 			
 			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
 				@Override
-				public String alias() {
+				public String getAlias() {
 					return alias;
 				}
 				@Override
@@ -110,35 +136,78 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		}
 	}
 	
-	public void addGenericKeyStore(final KeyStore keyStore) throws KeyStoreException {
+	public void addGenericKeyStore(final KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+		addGenericKeyStore(keyStore, true); 
+	}
+	
+	public void addGenericKeyStore(final KeyStore keyStore, final boolean passwordNull) 
+	throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
 		Enumeration<String> aliases = keyStore.aliases();
 		while (aliases.hasMoreElements()) {
 			final String alias = aliases.nextElement();
 			
 			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
 				@Override
-				public String alias() {
+				public String getAlias() {
 					return alias;
 				}
 				@Override
 				public PrivateKey getPrivateKey() throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
-					return (PrivateKey) keyStore.getKey(alias, null);
+					// non-null override is used by the Apple Keychain KeyStore
+					// implementation, which expects a non-null parameter to 
+					// trigger it to work
+					LOGGER.debug("Trying to retrieve privateKey; alias={}", alias);
+					
+					return (PrivateKey) keyStore.getKey(
+							alias, 
+							passwordNull ? null : "not-null".toCharArray());
 				}
 				@Override
 				public X509Certificate getX509Certificate() throws KeyStoreException {
-					return keyStore.getCertificate(alias) != null ?
-							(X509Certificate) keyStore.getCertificate(alias) :
-							(getX509CertificateChain() != null && getX509CertificateChain().length > 0 ?
-									getX509CertificateChain()[0] :
-									null);
+					// First try keyStore.getCertificate(...)
+					X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+					
+					if (certificate != null) {
+						return certificate;
+					}
+				
+					// Fall back to using keyStore.getCertificateChain(...)
+					return getX509CertificateChain() != null && getX509CertificateChain().length > 0 ?
+							getX509CertificateChain()[0] :
+							null;
 				}
+				
 				@Override
 				public X509Certificate[] getX509CertificateChain() throws KeyStoreException {
-					return (X509Certificate[]) keyStore.getCertificateChain(alias);
+					X509Certificate[] certificates = null;
+					
+					// First try keyStore.getCertificateChain(...)
+					Certificate[] certificateChain = keyStore.getCertificateChain(alias);
+					if (certificateChain != null) {
+						certificates = new X509Certificate[certificateChain.length];
+						for (int i=0; i<certificates.length; i++) {
+							certificates[i] = (X509Certificate) certificateChain[i];
+						}
+	
+						return certificates;
+					}
+					
+					// Fall back to using keyStore.getCertificate(...)
+					X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+					
+					if (certificate != null) {
+						certificates = new X509Certificate[1];
+						certificates[0] = certificate;
+					}
+					
+					return certificates;
 				}
+
 				@Override
-				public boolean isKeyEntry() throws KeyStoreException {
-					return keyStore.isKeyEntry(alias);
+				public boolean isKeyEntry() throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+					boolean keyEntry = keyStore.isKeyEntry(alias);
+
+					return keyEntry ? keyEntry : getPrivateKey() != null;
 				}
 			};
 
@@ -146,9 +215,13 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		}
 	}
 	
-	public void add(final KeyStore keyStore) throws KeyStoreException {
+	public void add(final KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
 		if (keyStore.getClass().getName().equals(SUN_MSCAPI_KEY_STORE_CLASS)) {
 			addSunMSCAPIKeyStore(keyStore);
+		} else if (keyStore.getProvider().getName().equals(APPLE)) {
+			LOGGER.debug("Adding Apple KeychainKeyStore");
+			
+			addGenericKeyStore(keyStore, false);
 		} else {
 			addGenericKeyStore(keyStore);
 		}
@@ -184,18 +257,18 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 	}
 
 	@Override
-	public boolean isKeyEntry(String alias) throws KeyStoreException {
+	public boolean isKeyEntry(String alias) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
 		return aliasedEntries.get(alias) != null ?
 				aliasedEntries.get(alias).isKeyEntry() :
 				null;
 	}
 
 	private interface KeyStoreEntryProxy {
-		String alias();
+		String getAlias();
 		PrivateKey getPrivateKey() throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException;
 		X509Certificate getX509Certificate() throws KeyStoreException;
 		X509Certificate[] getX509CertificateChain() throws KeyStoreException;
-		boolean isKeyEntry() throws KeyStoreException;
+		boolean isKeyEntry() throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException;
 	}
 	
 	public static Object getField(Object instance, String name) {
