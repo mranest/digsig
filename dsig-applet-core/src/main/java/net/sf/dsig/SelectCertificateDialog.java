@@ -201,6 +201,8 @@ implements ActionListener, KeyListener, MouseListener, ListSelectionListener {
 				certificateTableModel.getValidCertificateCount() == 1) {
 			certificateTable.setRowSelectionInterval(0, 0);
 			certificateTable.setColumnSelectionInterval(0, certificateTableModel.getColumnCount()-1);
+			
+			updateDetailsTextArea(getSelectedX509Certificate());
 		}
 		
 		pack();
