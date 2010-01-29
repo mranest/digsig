@@ -7,11 +7,11 @@
 -injars      target/dependencies/slf4j-ext.jar(**.class)
 -injars      target/dependencies/slf4j-jdk14.jar(**.class)
 -injars      target/dependencies/jcl-over-slf4j.jar(**.class)
--injars      target/dependencies/plugin.jar(**.class)
 -outjars     target/dsig-applet-complete.jar
 # -libraryjars <java.home>/lib/rt.jar
 -libraryjars <java.home>/../Classes/classes.jar
 -libraryjars <java.home>/lib/ext/sunpkcs11.jar
+-libraryjars target/dependencies/plugin.jar
 -dontskipnonpubliclibraryclasses
 -ignorewarnings
 -dontobfuscate
