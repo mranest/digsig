@@ -76,9 +76,14 @@ public class MozillaKeyStoreFactory implements KeyStoreFactory {
 				p = new SunPKCS11(new ByteArrayInputStream(
 						getMozillaConfiguration(true).getBytes()));
 			} catch (ProviderException e) {
-				logger.debug("Error while instantiating SunPKCS11 provider; retrying without nssLibraryDirectory", e);
-				p = new SunPKCS11(new ByteArrayInputStream(
-						getMozillaConfiguration(false).getBytes()));
+				if (	e.getCause() != null &&
+						e.getCause().getClass().getName().equals("sun.security.pkcs11.ConfigurationException")) {
+					logger.debug("Error while instantiating SunPKCS11 provider; retrying without nssLibraryDirectory", e);
+					p = new SunPKCS11(new ByteArrayInputStream(
+							getMozillaConfiguration(false).getBytes()));
+				} else {
+					throw e;
+				}
 			}
 			Security.addProvider(p);
 		}
