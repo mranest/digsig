@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Anestis Georgiadis
+ * Copyright 2007-2010 Anestis Georgiadis
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -622,7 +622,7 @@ public class DSApplet extends JApplet {
 	public String getAppletInfo() {
 		return "Digital Signature Applet - " +
 			DSAPPLET_VERSION +
-			"\nCopyright \u00a9 2007-2009 Anestis Georgiadis" +
+			"\nCopyright \u00a9 2007-2010 Anestis Georgiadis" +
 			"\nhttp://dsig.sourceforge.net";
 	}
 	
