@@ -87,6 +87,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		}
 		
 		serialNumbersAdded.add(serialNumber);
+		
 		LOGGER.debug("Added certificate; alias={}, serialNumber={}", proxy.getAlias(), serialNumber);
 		
 		aliasedEntries.put(proxy.getAlias(), proxy);
@@ -222,10 +223,10 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 				keyStore.getProvider().getName());
 		
 		if (keyStore.getProvider().getName().equals(SUNMSCAPI_PROVIDER)) {
+			LOGGER.debug("Enabling special handling for SunMSCAPI provider");
+			
 			addSunMSCAPIKeyStore(keyStore);
 		} else if (keyStore.getProvider().getName().equals(APPLE_PROVIDER)) {
-			LOGGER.debug("Adding Apple KeychainKeyStore");
-			
 			addGenericKeyStore(keyStore, false);
 		} else {
 			addGenericKeyStore(keyStore);
