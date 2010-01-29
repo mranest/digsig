@@ -41,9 +41,9 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 	private static final Logger LOGGER = 
 			LoggerFactory.getLogger(MultipleKeyStoreProxy.class);
 	
-	private static final String SUN_MSCAPI_KEY_STORE_CLASS = "sun.security.mscapi.KeyStore";
+	private static final String SUNMSCAPI_PROVIDER = "SunMSCAPI";
 	
-	private static final String APPLE = "Apple";
+	private static final String APPLE_PROVIDER = "Apple";
 	
 	private Set<BigInteger> serialNumbersAdded = new HashSet<BigInteger>();
 
@@ -106,6 +106,8 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		for (final Object entry : entries) {
 			String originalAlias = (String) getField(entry, "alias");
 			final String alias = originalAlias + "-" + entry.hashCode();
+			
+			LOGGER.debug("Creating KeyStoreEntryProxy for MSCAPI alias [{}]", alias);
 			
 			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
 				@Override
@@ -216,9 +218,12 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 	}
 	
 	public void add(final KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
-		if (keyStore.getClass().getName().equals(SUN_MSCAPI_KEY_STORE_CLASS)) {
+		LOGGER.debug("About to handle keyStore of provider [{}]", 
+				keyStore.getProvider().getName());
+		
+		if (keyStore.getProvider().getName().equals(SUNMSCAPI_PROVIDER)) {
 			addSunMSCAPIKeyStore(keyStore);
-		} else if (keyStore.getProvider().getName().equals(APPLE)) {
+		} else if (keyStore.getProvider().getName().equals(APPLE_PROVIDER)) {
 			LOGGER.debug("Adding Apple KeychainKeyStore");
 			
 			addGenericKeyStore(keyStore, false);

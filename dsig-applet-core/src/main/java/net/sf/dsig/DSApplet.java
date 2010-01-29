@@ -63,7 +63,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.0.0-20090923";
+	private static final String DSAPPLET_VERSION = "2.0.0-20100129";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
