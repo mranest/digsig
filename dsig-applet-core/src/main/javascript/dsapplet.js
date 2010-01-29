@@ -127,6 +127,9 @@ DSApplet.prototype = {
 	setErrorJSFunction: function (errorJSFunction) {
 		this.errorJSFunction = errorJSFunction;
 	},
+	setNoCertificatesJSFunction: function (noCertificatesJSFunction) {
+		this.noCertificatesJSFunction = noCertificatesJSFunction;
+	},
 	setExpirationDateChecked: function (expirationDateChecked) {
 		this.expirationDateChecked = expirationDateChecked;
 	},

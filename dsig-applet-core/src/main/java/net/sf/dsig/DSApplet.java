@@ -23,7 +23,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.math.BigInteger;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +121,19 @@ public class DSApplet extends JApplet {
 	
 	public void setErrorJSFunction(String errorJSFunction) {
 		this.errorJSFunction = errorJSFunction;
+	}
+	
+	/**
+	 * <p>The name of the JavaScript function to invoke when no certificates
+	 * are available for performing a digital signature.
+	 * 
+	 * <p>The method is called as follows:
+	 * <pre><i>noCertificatesJSFunction();
+	 */
+	private String noCertificatesJSFunction = null;
+	
+	public void setNoCertificatesJSFunction(String noCertificatesJSFunction) {
+		this.noCertificatesJSFunction = noCertificatesJSFunction;
 	}
 	
 	/**
@@ -223,6 +239,8 @@ public class DSApplet extends JApplet {
 					"name of JS function to execute on succesful signing; called with no arguments (i.e. onSuccess(); )" },
 				{ 	"errorJSFunction", "String", 
 					"name of JS function to execute on failed signing; called with no arguments (i.e. onError(); )" },
+				{ 	"noCertificatesJSFunction", "String", 
+					"name of JS function to execute when no certificates exist; called with no arguments (i.e. onNoCertificates(); )" },
 				{ 	"issuerNameRegex", "String", 
 					"regular expression to match issuer's name for acceptance" },
 				{ 	"subjectNameRegex", "String", 
@@ -377,7 +395,42 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
-	public boolean signInternal(String formId) {
+	public boolean hasCertificates() {
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() {
+				@Override
+				public void run() {
+					KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
+					Environment.getSingleton().init(factory);
+					
+					KeyStoreProxy proxy = null;
+					try {
+						proxy = factory.createKeyStoreProxy();
+					} catch (Exception e) {
+						handleError("DSA0001", e);
+					}
+					
+					Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
+					
+					try {
+						aliasX509CertificateChainPair =
+							createAliasX509CertificateChainPair(proxy);
+					} catch (Exception e) {
+						handleError("DSA0002", e);
+					}
+					
+					if (aliasX509CertificateChainPair.isEmpty()) {
+						throw new RuntimeException("So that catch() below is invoked");
+					}
+				}
+			});
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
+	private boolean signInternal(String formId) {
 		Profiler profiler = new Profiler("SIGNATURE");
 		profiler.setLogger(logger);
 		
@@ -392,9 +445,9 @@ public class DSApplet extends JApplet {
 		KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
 		Environment.getSingleton().init(factory);
 		
-		KeyStoreProxy ksh = null;
+		KeyStoreProxy proxy = null;
 		try {
-			ksh = factory.createKeyStoreProxy();
+			proxy = factory.createKeyStoreProxy();
 		} catch (Exception e) {
 			handleError("DSA0001", e);
 		}
@@ -405,76 +458,19 @@ public class DSApplet extends JApplet {
 		profiler.start("Keypair filtering");
 		
 		try {
-			Set<String> aliases = ksh.aliases();
-			for (String alias : aliases) {
-				X509Certificate[] certificateChain = ksh.getX509CertificateChain(alias);
-				if (certificateChain == null || certificateChain.length == 0) {
-					logger.warn("Null certificate chain returned; alias=" + alias);
-					
-					continue;
-				}
-				
-				X509Certificate certificate = certificateChain[0];
-				
-				String subjectName = certificate.getSubjectX500Principal().getName();
-				String issuerName = certificate.getIssuerX500Principal().getName();
-				BigInteger serialNumber = certificate.getSerialNumber();
-	
-				// Filter by subject
-				
-				if (	getSubjectMatchingPattern() != null &&
-						!getSubjectMatchingPattern().matcher(subjectName).matches()) {
-					logger.info("Subject does not match; skipping" +
-							": certificate.subject=" + subjectName);
-					continue;
-				}
-				
-				// Filter by issuer
-				
-				if (	getIssuerMatchingPattern() != null &&
-						!getIssuerMatchingPattern().matcher(issuerName).matches()) {
-					logger.info("Issuer does not match; skipping" +
-							": certificate.subject=" + subjectName +
-							", certificate.issuer=" + issuerName);
-					continue;
-				}
-				
-				// Filter by serial number
-				
-				if (	getSerialNumbersAllowedSet() != null &&
-						!getSerialNumbersAllowedSet().contains(serialNumber)) {
-					logger.info("Serial number is not allowed; skipping" + 
-							": certificate.subject=" + subjectName +
-							", certificate.serialNumber=" + serialNumber);
-					continue;
-				}
-				
-				// Filter by key usage
-				
-				if (	keyUsageRestrictions != null &&
-						!KeyUsageHelper.validateKeyUsage(certificate, keyUsageRestrictions)) {
-					logger.info("Key usage restrictions not met; skipping" + 
-							": certificate.subject=" + subjectName +
-							", certificate.keyUsage=" + KeyUsageHelper.printKeyUsage(certificate));
-					continue;
-				}
-				
-				// Filter by private key
-				
-				if (!ksh.isKeyEntry(alias)) {
-					logger.info("Private key not found; skipping" + 
-							": certificate.subject=" + subjectName);
-					continue;
-				}
-				
-				logger.debug("Accepting certificate" + 
-						"; certificate.subject=" + subjectName +
-						", certificate.serialNumber=" + serialNumber);
-				
-				aliasX509CertificateChainPair.put(alias, ksh.getX509CertificateChain(alias));
-			}
+			aliasX509CertificateChainPair = createAliasX509CertificateChainPair(proxy);
 		} catch (Exception e) {
 			handleError("DSA0002", e);
+		}
+		
+		if (aliasX509CertificateChainPair.isEmpty()) {
+			if (noCertificatesJSFunction != null) {
+				LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
+			} else {
+				logger.debug("noCertificatesJSFunction not set");
+			}
+			
+			return false;
 		}
 		
 		profiler.start("User selection");
@@ -499,14 +495,14 @@ public class DSApplet extends JApplet {
 
 		PrivateKey privateKey = null;
 		try {
-			privateKey = ksh.getPrivateKey(alias);
+			privateKey = proxy.getPrivateKey(alias);
 		} catch (Exception e) {
 			handleError("DSA0003", e);
 		}
 
 		X509Certificate[] certificateChain = null;
 		try {
-			certificateChain = ksh.getX509CertificateChain(alias);
+			certificateChain = proxy.getX509CertificateChain(alias);
 		} catch (Exception e) {
 			handleError("DSA0004", e);
 		}
@@ -543,6 +539,83 @@ public class DSApplet extends JApplet {
 		} finally {
 			profiler.stop().log();
 		}
+	}
+
+	private Map<String, X509Certificate[]> createAliasX509CertificateChainPair(KeyStoreProxy ksh)
+	throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+		Map<String, X509Certificate[]> aliasX509CertificateChainPair = 
+			new HashMap<String, X509Certificate[]>();
+			
+		Set<String> aliases = ksh.aliases();
+		for (String alias : aliases) {
+			X509Certificate[] certificateChain = ksh.getX509CertificateChain(alias);
+			if (certificateChain == null || certificateChain.length == 0) {
+				logger.warn("Null certificate chain returned; alias=" + alias);
+				
+				continue;
+			}
+			
+			X509Certificate certificate = certificateChain[0];
+			
+			String subjectName = certificate.getSubjectX500Principal().getName();
+			String issuerName = certificate.getIssuerX500Principal().getName();
+			BigInteger serialNumber = certificate.getSerialNumber();
+
+			// Filter by subject
+			
+			if (	getSubjectMatchingPattern() != null &&
+					!getSubjectMatchingPattern().matcher(subjectName).matches()) {
+				logger.info("Subject does not match; skipping" +
+						": certificate.subject=" + subjectName);
+				continue;
+			}
+			
+			// Filter by issuer
+			
+			if (	getIssuerMatchingPattern() != null &&
+					!getIssuerMatchingPattern().matcher(issuerName).matches()) {
+				logger.info("Issuer does not match; skipping" +
+						": certificate.subject=" + subjectName +
+						", certificate.issuer=" + issuerName);
+				continue;
+			}
+			
+			// Filter by serial number
+			
+			if (	getSerialNumbersAllowedSet() != null &&
+					!getSerialNumbersAllowedSet().contains(serialNumber)) {
+				logger.info("Serial number is not allowed; skipping" + 
+						": certificate.subject=" + subjectName +
+						", certificate.serialNumber=" + serialNumber);
+				continue;
+			}
+			
+			// Filter by key usage
+			
+			if (	keyUsageRestrictions != null &&
+					!KeyUsageHelper.validateKeyUsage(certificate, keyUsageRestrictions)) {
+				logger.info("Key usage restrictions not met; skipping" + 
+						": certificate.subject=" + subjectName +
+						", certificate.keyUsage=" + KeyUsageHelper.printKeyUsage(certificate));
+				continue;
+			}
+			
+			// Filter by private key
+			
+			if (!ksh.isKeyEntry(alias)) {
+				logger.info("Private key not found; skipping" + 
+						": certificate.subject=" + subjectName);
+				continue;
+			}
+			
+			logger.debug("Accepting certificate" + 
+					"; certificate.subject=" + subjectName +
+					", certificate.serialNumber=" + serialNumber);
+			
+			aliasX509CertificateChainPair.put(alias, ksh.getX509CertificateChain(alias));
+		}
+		
+		return aliasX509CertificateChainPair;
 	}
 	
 	@Override
