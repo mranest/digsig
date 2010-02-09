@@ -32,13 +32,6 @@
 					</execution>
 				</executions>
 			</plugin>
-		</plugins>
-	</build>
-	<profiles>
-		<profile>
-			<id>proguard</id>
-			<build>
-				<plugins>
 			<plugin>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<executions>
@@ -62,10 +55,8 @@
 					</execution>
 				</executions>
 			</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
+		</plugins>
+	</build>
 	<properties>
 		<proguard.version>4.4</proguard.version>
 	</properties>
