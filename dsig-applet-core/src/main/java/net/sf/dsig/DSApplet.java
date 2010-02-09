@@ -22,6 +22,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -66,7 +67,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.0.0-20100129";
+	private static final String DSAPPLET_VERSION = "2.0.0-20100209";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -375,57 +376,83 @@ public class DSApplet extends JApplet {
 		initProfiler.stop().log();
 	}
 
+	private void executeInThread(Runnable runnable) 
+	throws InterruptedException, InvocationTargetException {
+		// Use event dispatch thread of Swing, unless we're on a Mac
+		if (System.getProperty("os.name").startsWith("Mac OS X")) {
+			Thread t = new Thread(runnable);
+			t.start();
+			t.join();
+		} else {
+			SwingUtilities.invokeAndWait(runnable);
+		}
+	}
+	
 	public boolean sign(final String formId) {
 		if (!SwingUtilities.isEventDispatchThread()) {
+			logger.debug("Not in Swing's event dispatch thread");
+			
+			class MyRunnable implements Runnable {
+				public volatile boolean successful = false;
+				@Override
+				public void run() {
+					successful = signInternal(formId);
+				}
+			};
+			
+			MyRunnable mr = new MyRunnable();
+			
 			try {
-				// Run the signing process in the Event-Dispatch thread of Swing
-				SwingUtilities.invokeAndWait(new Runnable() {
-					public void run() {
-						if (!signInternal(formId)) {
-							throw new RuntimeException("So that catch() below is invoked");
-						}
-					}
-				});
-				return true;
+				executeInThread(mr);
+				return mr.successful;
 			} catch (Exception e) {
+				logger.warn("Exception in sign()", e);
+				
 				return false;
 			}
 		} else {
+			logger.debug("In Swing's event dispatch thread");
+
 			return signInternal(formId);
 		}
 	}
 	
 	public boolean hasCertificates() {
-		try {
-			SwingUtilities.invokeAndWait(new Runnable() {
-				@Override
-				public void run() {
-					KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
-					Environment.getSingleton().init(factory);
-					
-					KeyStoreProxy proxy = null;
-					try {
-						proxy = factory.createKeyStoreProxy();
-					} catch (Exception e) {
-						handleError("DSA0001", e);
-					}
-					
-					Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
-					
-					try {
-						aliasX509CertificateChainPair =
-							createAliasX509CertificateChainPair(proxy);
-					} catch (Exception e) {
-						handleError("DSA0002", e);
-					}
-					
-					if (aliasX509CertificateChainPair.isEmpty()) {
-						throw new RuntimeException("So that catch() below is invoked");
-					}
+		class MyRunnable implements Runnable {
+			public volatile boolean successful = false;
+			@Override
+			public void run() {
+				KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
+				Environment.getSingleton().init(factory);
+				
+				KeyStoreProxy proxy = null;
+				try {
+					proxy = factory.createKeyStoreProxy();
+				} catch (Exception e) {
+					handleError("DSA0001", e);
 				}
-			});
-			return true;
+				
+				Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
+				
+				try {
+					aliasX509CertificateChainPair =
+						createAliasX509CertificateChainPair(proxy);
+				} catch (Exception e) {
+					handleError("DSA0002", e);
+				}
+				
+				successful = !aliasX509CertificateChainPair.isEmpty();
+			}
+		}
+		
+		MyRunnable mr = new MyRunnable();
+		
+		try {
+			executeInThread(mr);
+			return mr.successful;
 		} catch (Exception e) {
+			logger.warn("Exception in hasCertificates()", e);
+
 			return false;
 		}
 	}
@@ -466,11 +493,11 @@ public class DSApplet extends JApplet {
 		if (aliasX509CertificateChainPair.isEmpty()) {
 			if (noCertificatesJSFunction != null) {
 				LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
+				
+				return false;
 			} else {
 				logger.debug("noCertificatesJSFunction not set");
 			}
-			
-			return false;
 		}
 		
 		profiler.start("User selection");
