@@ -33,6 +33,7 @@ import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 
 import net.sf.dsig.LiveConnectProxy;
 import net.sf.dsig.helpers.IniContentHandler;
@@ -266,9 +267,18 @@ public class MozillaKeyStoreFactory implements KeyStoreFactory {
 			for (Callback callback : callbacks) {
 				if (callback instanceof PasswordCallback) {
 					PasswordCallback passwordCallback = (PasswordCallback) callback;
-
-					String password = JOptionPane.showInputDialog("Please enter the master password (" + name + "):");
-					passwordCallback.setPassword(password.toCharArray());
+					
+					JPasswordField passwordField = new JPasswordField();
+					passwordField.setEchoChar('*');
+					JOptionPane.showMessageDialog(
+							null, 
+							passwordField,
+							"Enter master password (" + name + "):",
+							JOptionPane.QUESTION_MESSAGE);
+					// String password = JOptionPane.showInputDialog("Please enter the master password (" + name + "):");
+					// passwordCallback.setPassword(password.toCharArray());
+					
+					passwordCallback.setPassword(passwordField.getPassword());
 				}
 			}
 		}

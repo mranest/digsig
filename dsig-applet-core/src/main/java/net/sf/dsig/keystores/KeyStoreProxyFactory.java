@@ -72,9 +72,9 @@ public class KeyStoreProxyFactory {
 		
 		// ... then MacOS X (commented out until we resolve the issues
 		// with aliased entries not always returning true for keyEntry)
-//		if (System.getProperty("os.name").startsWith("Mac OS X")) {
-//			addKeychainKeyStore(proxy);
-//		}
+		if (System.getProperty("os.name").startsWith("Mac OS X")) {
+			addKeychainKeyStore(proxy);
+		}
 		
 		// Mozilla KeyStore comes last, if browser is Mozilla-based (only 
 		// Mozilla initializes the NSS native libraries)
@@ -155,17 +155,17 @@ public class KeyStoreProxyFactory {
 		}
 	}
 	
-//	private void addKeychainKeyStore(MultipleKeyStoreProxy proxy) {
-//		try {
-//			KeyStore ks = new KeychainKeyStoreFactory().getKeyStore();
-//			if (ks != null) {
-//				proxy.add(ks);
-//			}
-//			
-//			LOGGER.debug("Added Keychain KeyStore");
-//		} catch (Exception ignored) {
-//			LOGGER.warn("Could not initialize Keychain KeyStore", ignored);
-//		}
-//	}
+	private void addKeychainKeyStore(MultipleKeyStoreProxy proxy) {
+		try {
+			KeyStore ks = new KeychainKeyStoreFactory().getKeyStore();
+			if (ks != null) {
+				proxy.add(ks);
+			}
+			
+			LOGGER.debug("Added Keychain KeyStore");
+		} catch (Exception ignored) {
+			LOGGER.warn("Could not initialize Keychain KeyStore", ignored);
+		}
+	}
 	
 }
