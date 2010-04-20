@@ -1,10 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.sf.dsig</groupId>
 	<artifactId>dsig-applet-xmldsig</artifactId>
 	<name>dsig-applet-xmldsig</name>
-	<version>2.0.0</version>
+	<version>2.0.1</version>
 	<build>
 		<finalName>dsig-applet-xmldsig</finalName>
 		<plugins>
@@ -44,16 +45,24 @@
 						<configuration>
 							<tasks>
 								<taskdef resource="proguard/ant/task.properties">
-									<classpath refid="maven.compile.classpath" />
+									<classpath refid="maven.compile.classpath"/>
 								</taskdef>
-								<proguard configuration="proguard.pro" />
+								<proguard configuration="proguard.pro"/>
 								<signjar storepass="password" alias="alias"
 									keystore="../dsig-applet-core/src/main/config/keystore.jks"
-									jar="${project.build.directory}/dsig-applet-complete.jar" />
+									jar="${project.build.directory}/dsig-applet-complete.jar"/>
 							</tasks>
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<addMavenDescriptor>false</addMavenDescriptor>
+					</archive>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -64,7 +73,7 @@
 		<dependency>
 			<groupId>net.sf.dsig</groupId>
 			<artifactId>dsig-applet-core</artifactId>
-			<version>2.0.0</version>
+			<version>2.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.santuario</groupId>
