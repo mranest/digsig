@@ -61,6 +61,11 @@
 				<configuration>
 					<archive>
 						<addMavenDescriptor>false</addMavenDescriptor>
+						<!-- Required for avoiding the unsafe components warning:
+							 http://java.sun.com/javase/6/docs/technotes/guides/jweb/mixed_code.html -->
+						<manifestEntries>
+							<Trusted-Only>true</Trusted-Only>
+						</manifestEntries>
 					</archive>
 				</configuration>
 			</plugin>
