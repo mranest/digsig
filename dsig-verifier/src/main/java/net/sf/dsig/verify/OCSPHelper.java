@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Anestis Georgiadis
+ * Copyright 2007-2010 Anestis Georgiadis
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Vector;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.logging.Log;
@@ -105,7 +106,7 @@ public class OCSPHelper {
 		return config;
 	}
 
-	private HttpClient client = new HttpClient();
+	private HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
 	
 	/**
 	 * Check with OCSP protocol whether a certificate is valid

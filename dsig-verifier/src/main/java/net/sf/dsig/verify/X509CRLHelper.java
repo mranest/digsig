@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Anestis Georgiadis
+ * Copyright 2007-2010 Anestis Georgiadis
  *  
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -122,7 +123,7 @@ public class X509CRLHelper {
 	
 	private Object mutex = new Object();
 
-	private HttpClient client = new HttpClient();
+	private HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
 	
 	/**
 	 * Retrieve the CRL
