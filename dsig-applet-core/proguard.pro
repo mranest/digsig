@@ -2,6 +2,7 @@
 -injars      target/dependencies/commons-beanutils-core.jar(**.class)
 -injars      target/dependencies/commons-codec.jar(**.class)
 -injars      target/dependencies/commons-io.jar(**.class)
+-injars      target/dependencies/commons-lang.jar(**.class)
 -injars      target/dependencies/commons-collections.jar(!org/apache/commons/collections/ArrayStack.class,!org/apache/commons/collections/FastHashMap.class,**.class)
 -injars      target/dependencies/slf4j-api.jar(**.class)
 -injars      target/dependencies/slf4j-ext.jar(**.class)

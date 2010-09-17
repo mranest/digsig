@@ -6,7 +6,22 @@
 		<script type="text/javascript" src="../../main/javascript/dsapplet.js"> </script>
 		<script type="text/javascript">
 		function signForm(form) {
-			return document.getElementById('dsigApplet').sign(form);
+			var certificates = document.getElementById('certificates');
+			var alias = certificates.options[certificates.selectedIndex].value;
+			dsapplet.signForm('form1', alias);
+		}
+		function onNoCertificates() {
+			alert("No certificates were found; I would be resubmitting right now");
+		}
+		function populatesCertificates() {
+			var aliasedDescriptions = eval(dsapplet.getAliasedDescriptions());
+			var certificates = document.getElementById('certificates');
+			
+			certificates.options.length = 0;
+			for (i=0; i<aliasedDescriptions.length; i++) {
+				var aliasedDescription = aliasedDescriptions[i];
+				certificates.options[i] = new Option(aliasedDescription.description, aliasedDescription.alias);
+			}
 		}
 		</script>
 	</head>
@@ -49,6 +64,13 @@
 					<td><textarea name="signature" rows=25" cols="80"></textarea></td>
 				</tr>
 				<tr>
+					<td align="right">Certificates: </td>
+					<td>
+						<select id="certificates" name="certificates">
+						</select>
+					</td>
+				</tr>
+				<tr>
 					<td></td>
 					<td>
 						<script>
@@ -56,6 +78,7 @@
 							dsapplet.setFormId('');
 							dsapplet.setSignatureElement('signature');
 						</script>
+						<input name="popu" type="button" onclick="populatesCertificates();" value="Populate"/>
 						<input name="sign" type="button" onclick="if (dsapplet.signForm('form1')) { this.disabled = true; }" value="Sign"/>
 						<input name="subm" type="submit" value="Submit" />
 						<script>

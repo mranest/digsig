@@ -104,13 +104,12 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 				getField(keyStoreSpi, "entries");
 
 		// Use 
-		for (final Object entry : entries) {
-			String originalAlias = (String) getField(entry, "alias");
-			final String alias = originalAlias + "-" + entry.hashCode();
-			
-			LOGGER.debug("Creating KeyStoreEntryProxy for MSCAPI alias [{}]", alias);
+		for (final Object each : entries) {
+			final String originalAlias = (String) getField(each, "alias");
 			
 			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
+				private final String alias = originalAlias + "-" + each.hashCode();
+				private final Object entry = each;
 				@Override
 				public String getAlias() {
 					return alias;
@@ -134,6 +133,8 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 					return getPrivateKey() != null;
 				}
 			};
+
+			LOGGER.debug("Created MSCAPI KeyStoreEntryProxy; alias={}", proxy.getAlias());
 
 			addAliasedEntry(proxy);
 		}
@@ -241,31 +242,39 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 	@Override
 	public PrivateKey getPrivateKey(String alias)
 	throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
-		return aliasedEntries.get(alias) != null ?
-				aliasedEntries.get(alias).getPrivateKey() :
+		KeyStoreEntryProxy entryProxy = aliasedEntries.get(alias);
+		
+		return entryProxy != null ?
+				entryProxy.getPrivateKey() :
 				null;
 	}
 
 	@Override
 	public X509Certificate getX509Certificate(String alias)
 			throws KeyStoreException {
-		return aliasedEntries.get(alias) != null ?
-				aliasedEntries.get(alias).getX509Certificate() :
+		KeyStoreEntryProxy entryProxy = aliasedEntries.get(alias);
+		
+		return entryProxy != null ?
+				entryProxy.getX509Certificate() :
 				null;
 	}
 
 	@Override
 	public X509Certificate[] getX509CertificateChain(String alias)
 			throws KeyStoreException {
-		return aliasedEntries.get(alias) != null ?
-				aliasedEntries.get(alias).getX509CertificateChain() :
+		KeyStoreEntryProxy entryProxy = aliasedEntries.get(alias);
+		
+		return entryProxy != null ?
+				entryProxy.getX509CertificateChain() :
 				null;
 	}
 
 	@Override
 	public boolean isKeyEntry(String alias) throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
-		return aliasedEntries.get(alias) != null ?
-				aliasedEntries.get(alias).isKeyEntry() :
+		KeyStoreEntryProxy entryProxy = aliasedEntries.get(alias);
+		
+		return entryProxy != null ?
+				entryProxy.isKeyEntry() :
 				null;
 	}
 

@@ -29,6 +29,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.X509Certificate;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -55,6 +56,7 @@ import net.sf.dsig.impl.StaticStrategyFactory;
 import net.sf.dsig.keystores.KeyStoreProxy;
 import net.sf.dsig.keystores.KeyStoreProxyFactory;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.profiler.Profiler;
 
@@ -67,7 +69,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.0.1-20100420";
+	private static final String DSAPPLET_VERSION = "2.1.0-XXXXXXXX";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -284,7 +286,7 @@ public class DSApplet extends JApplet {
 			button.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					try {
-						signInternal(formId);
+						signInternal(formId, null);
 					} catch (Exception ex) { }
 				}
 			});
@@ -307,6 +309,23 @@ public class DSApplet extends JApplet {
 	}
 	
 	private StrategyFactory strategyFactory = StaticStrategyFactory.getSingleton();
+	
+	private KeyStoreProxy keyStoreProxy = null;
+	
+	private KeyStoreProxy getKeyStoreProxy() {
+		if (keyStoreProxy == null) {
+			KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
+			Environment.getSingleton().init(factory);
+			
+			try {
+				keyStoreProxy = factory.createKeyStoreProxy();
+			} catch (Exception e) {
+				handleError("DSA0001", e);
+			}
+		}
+		
+		return keyStoreProxy;
+	}
 	
 	@Override
 	public void init() {
@@ -389,6 +408,10 @@ public class DSApplet extends JApplet {
 	}
 	
 	public boolean sign(final String formId) {
+		return sign(formId, null);
+	}
+	
+	public boolean sign(final String formId, final String alias) {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			logger.debug("Not in Swing's event dispatch thread");
 			
@@ -396,7 +419,7 @@ public class DSApplet extends JApplet {
 				public volatile boolean successful = false;
 				@Override
 				public void run() {
-					successful = signInternal(formId);
+					successful = signInternal(formId, alias);
 				}
 			};
 			
@@ -413,7 +436,7 @@ public class DSApplet extends JApplet {
 		} else {
 			logger.debug("In Swing's event dispatch thread");
 
-			return signInternal(formId);
+			return signInternal(formId, alias);
 		}
 	}
 	
@@ -422,15 +445,7 @@ public class DSApplet extends JApplet {
 			public volatile boolean successful = false;
 			@Override
 			public void run() {
-				KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
-				Environment.getSingleton().init(factory);
-				
-				KeyStoreProxy proxy = null;
-				try {
-					proxy = factory.createKeyStoreProxy();
-				} catch (Exception e) {
-					handleError("DSA0001", e);
-				}
+				KeyStoreProxy proxy = getKeyStoreProxy();
 				
 				Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
 				
@@ -457,7 +472,72 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
-	private boolean signInternal(String formId) {
+	public String getAliasedDescriptions() {
+		class MyRunnable implements Runnable {
+			public volatile String json = "";
+			@Override
+			public void run() {
+				KeyStoreProxy proxy = getKeyStoreProxy();
+				
+				Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
+				
+				try {
+					aliasX509CertificateChainPair =
+						createAliasX509CertificateChainPair(proxy);
+				} catch (Exception e) {
+					handleError("DSA0002", e);
+				}
+
+				CertificateTableModel ctm = new CertificateTableModel(
+						aliasX509CertificateChainPair, 
+						messages);
+				Environment.getSingleton().init(ctm);
+				
+				for (int i=0; i<ctm.getRowCount(); i++) {
+					X509Certificate certificate = ctm.getX509Certificate(i);
+					if (new Date().compareTo(certificate.getNotAfter()) > 0) {
+						continue;
+					}
+					
+					String alias = ctm.getAlias(i);
+					
+					// Column #0 is the name
+					// Column #1 is the friendly name
+					String name = (String) ctm.getValueAt(i, 0);
+					if (name != null) {
+						name = StringEscapeUtils.escapeJavaScript(name);
+					}
+					String friendlyName = (String) ctm.getValueAt(i, 1);
+					if (friendlyName != null) {
+						friendlyName = StringEscapeUtils.escapeJavaScript(friendlyName);
+					}
+					String compositeName = (friendlyName != null && friendlyName.length() > 0) ?
+							(friendlyName + " - " + name) :
+							name;
+							
+					String entry = "{ \"alias\": \"" + alias + "\", \"description\": \"" + compositeName + "\" }";
+					
+					if (json.length() > 0) { json += ", "; }
+					json += entry;
+				}
+				
+				json = "[ " + json + " ]";
+			}
+		}
+		
+		MyRunnable mr = new MyRunnable();
+		
+		try {
+			executeInThread(mr);
+			return mr.json;
+		} catch (Exception e) {
+			logger.warn("Exception in getAliasDescriptionMap()", e);
+
+			return "[]";
+		}
+	}
+	
+	private boolean signInternal(String formId, String alias) {
 		Profiler profiler = new Profiler("SIGNATURE");
 		profiler.setLogger(logger);
 		
@@ -469,57 +549,53 @@ public class DSApplet extends JApplet {
 		
 		profiler.start("Keystore creation");
 		
-		KeyStoreProxyFactory factory = new KeyStoreProxyFactory();
-		Environment.getSingleton().init(factory);
-		
-		KeyStoreProxy proxy = null;
-		try {
-			proxy = factory.createKeyStoreProxy();
-		} catch (Exception e) {
-			handleError("DSA0001", e);
-		}
+		KeyStoreProxy proxy = getKeyStoreProxy();
 		
 		Map<String, X509Certificate[]> aliasX509CertificateChainPair = 
 				new HashMap<String, X509Certificate[]>();
 
-		profiler.start("Keypair filtering");
-		
-		try {
-			aliasX509CertificateChainPair = createAliasX509CertificateChainPair(proxy);
-		} catch (Exception e) {
-			handleError("DSA0002", e);
-		}
-		
-		if (aliasX509CertificateChainPair.isEmpty()) {
-			if (noCertificatesJSFunction != null) {
-				LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
-				
+		if (alias == null) {
+			profiler.start("Keypair filtering");
+			
+			try {
+				aliasX509CertificateChainPair = createAliasX509CertificateChainPair(proxy);
+			} catch (Exception e) {
+				handleError("DSA0002", e);
+			}
+			
+			if (aliasX509CertificateChainPair.isEmpty()) {
+				if (noCertificatesJSFunction != null) {
+					LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
+					
+					return false;
+				} else {
+					logger.debug("noCertificatesJSFunction not set");
+				}
+			}
+			
+			profiler.start("User selection");
+			
+			CertificateTableModel ctm = new CertificateTableModel(
+						aliasX509CertificateChainPair,
+						messages);
+			Environment.getSingleton().init(ctm);
+			
+			SelectCertificateDialog scd = new SelectCertificateDialog(
+					ctm,
+					expirationDateChecked,
+					messages);
+			
+			scd.setModalityType(ModalityType.APPLICATION_MODAL);
+			scd.setVisible(true);
+	
+			alias = scd.getSelectedAlias();
+			if (alias == null) {
 				return false;
-			} else {
-				logger.debug("noCertificatesJSFunction not set");
 			}
 		}
 		
-		profiler.start("User selection");
+		logger.debug("Selected alias: [{}]", alias);
 		
-		CertificateTableModel ctm = new CertificateTableModel(
-					aliasX509CertificateChainPair,
-					messages);
-		Environment.getSingleton().init(ctm);
-		
-		SelectCertificateDialog scd = new SelectCertificateDialog(
-				ctm,
-				expirationDateChecked,
-				messages);
-		
-		scd.setModalityType(ModalityType.APPLICATION_MODAL);
-		scd.setVisible(true);
-
-		String alias = scd.getSelectedAlias();
-		if (alias == null) {
-			return false;
-		}
-
 		PrivateKey privateKey = null;
 		try {
 			privateKey = proxy.getPrivateKey(alias);
@@ -635,8 +711,9 @@ public class DSApplet extends JApplet {
 				continue;
 			}
 			
-			logger.debug("Accepting certificate" + 
-					"; certificate.subject=" + subjectName +
+			logger.debug("Accepting certificate" +
+					"; certificate.alias=" + alias +
+					", certificate.subject=" + subjectName +
 					", certificate.serialNumber=" + serialNumber);
 			
 			aliasX509CertificateChainPair.put(alias, ksh.getX509CertificateChain(alias));

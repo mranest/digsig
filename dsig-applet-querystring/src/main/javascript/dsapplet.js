@@ -218,7 +218,44 @@ DSApplet.prototype = {
 			document.write('></embed>');
 		}
 	},
-	signForm: function (form) {
-		return document.getElementById('dsigApplet').sign(form);
+	fillAppletDeclaration: function (width, height, dsigId) {
+		var innerHtml = '';
+		if (BrowserDetect.browser == 'Explorer') {
+			innerHtml += '<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-FFFF-ABCDEFFEDCBA"';
+			innerHtml += '		  codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"';
+			innerHtml += '        width="' + width + '" height="' + height + '">';
+			innerHtml += '	<param name="code" value="net.sf.dsig.DSApplet.class" />';
+			innerHtml += '	<param name="archive" value="' + this.jarUrl + '" />';
+			innerHtml += '	<param name="mayscript" value="true" />';
+			for (var i in this) {
+				if (typeof this[i] == 'string') {
+					innerHtml += '	<param name="' + i + '" value="' + this[i] + '" />';
+				}
+			}
+			innerHtml += '</object>';
+		} else {
+			innerHtml += '<embed  id="dsigApplet" code="net.sf.dsig.DSApplet.class" archive="' + this.jarUrl + '"';
+			innerHtml += '        width="' + width + '" height="' + height + '"';
+			innerHtml += '		type="application/x-java-applet;version=1.6"';
+			innerHtml += '		pluginspage="http://java.com/en/download/index.jsp"';
+			innerHtml += '		mayscript="true"';
+			for (var i in this) {
+				if (typeof this[i] == 'string') {
+					innerHtml += '		' + i + '="' + this[i] + '"';
+				}
+			}
+			innerHtml += '></embed>';
+		}
+		
+		document.getElementById(dsigId).innerHTML = innerHtml;
+	},
+	signForm: function (form, alias) {
+		return document.getElementById('dsigApplet').sign(form, alias);
+	},
+	hasCertificates: function () {
+		return document.getElementById('dsigApplet').hasCertificates();
+	},
+	getAliasedDescriptions: function() {
+		return document.getElementById('dsigApplet').getAliasedDescriptions();
 	}
 };
