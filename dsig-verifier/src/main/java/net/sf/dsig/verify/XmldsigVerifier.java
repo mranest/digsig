@@ -30,7 +30,9 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -42,6 +44,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.keys.content.X509Data;
+import org.apache.xml.security.signature.ObjectContainer;
 import org.apache.xml.security.signature.XMLSignature;
 import org.apache.xml.security.signature.XMLSignatureException;
 import org.w3c.dom.Document;
@@ -108,12 +111,26 @@ public class XmldsigVerifier {
 		signature = new XMLSignature(d.getDocumentElement(), null);
 		certificateChain = null;
 	}
+
+	public ObjectContainer[] getObjectContainers() throws VerificationException {
+		if (signature == null) {
+			throw new UnsupportedOperationException("initXXX() must be called first");
+		}
+
+		ObjectContainer[] objectContainers = 
+			new ObjectContainer[signature.getObjectLength()];
+		for (int i=0; i<signature.getObjectLength(); i++) {
+			objectContainers[i] = signature.getObjectItem(i);
+		}
+		
+		return objectContainers;
+	}
 	
 	public X509Certificate[] getCertificateChain() throws VerificationException {
 		if (signature == null) {
 			throw new UnsupportedOperationException("initXXX() must be called first");
 		}
-		
+
 		if (certificateChain == null) {
 			KeyInfo ki = signature.getKeyInfo();
 	
