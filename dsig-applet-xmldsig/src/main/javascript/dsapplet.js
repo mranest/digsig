@@ -169,6 +169,9 @@ DSApplet.prototype = {
 	setIncludedElements: function(includedElements) {
 		this.includedElements = includedElements;
 	},
+	setNonce: function(nonce) {
+		this.nonce = nonce;
+	},
 	printAppletDeclaration: function (width, height) {
 		if (BrowserDetect.browser == 'Explorer') {
 			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-FFFF-ABCDEFFEDCBA"');

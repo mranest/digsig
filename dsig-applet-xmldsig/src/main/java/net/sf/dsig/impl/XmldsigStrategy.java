@@ -101,6 +101,12 @@ public class XmldsigStrategy implements Strategy {
 		this.includedElements = includedElements;
 	}
 	
+	private String nonce = null;
+	
+	public void setNonce(String nonce) {
+		this.nonce = nonce;
+	}
+	
 	private Set<String> excludedElementsSet = null;
 	
 	private Set<String> includedElementsSet = null;
@@ -122,7 +128,8 @@ public class XmldsigStrategy implements Strategy {
 			new XmldsigSigner().sign(
 					privateKey, 
 					certificateChain, 
-					contentHandler.getContentDocument());
+					contentHandler.getContentDocument(),
+					nonce);
 
 		Transformer t = TransformerFactory.newInstance().newTransformer();
 		StringWriter w = new StringWriter();
@@ -138,7 +145,7 @@ public class XmldsigStrategy implements Strategy {
 		}
 	}
 
-	private static final DocumentBuilder builder;
+	static final DocumentBuilder builder;
 	
 	static {
 		try {

@@ -48,6 +48,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 public class XmldsigSigner {
@@ -59,33 +60,68 @@ public class XmldsigSigner {
 	}
 	
 	private XMLSignatureFactory signatureFactory = XMLSignatureFactory.getInstance("DOM");
-	
+
 	public Document sign(
 			PrivateKey signingKey,
 			X509Certificate[] certificateChain,
-			Document contentDoc) 
+			Document formDataDoc,
+			String nonce) 
 	throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, 
 	ParserConfigurationException, MarshalException, XMLSignatureException {
 		// The Transform object that will contain the C14N method
-		Transform refTransform = signatureFactory.newTransform(
+		Transform transform = signatureFactory.newTransform(
 				CanonicalizationMethod.EXCLUSIVE, 
 				(TransformParameterSpec) null);
 
-		// The Reference object that will contain the form data
+		List<Reference> references = new ArrayList<Reference>();
+		List<XMLObject> objects = new ArrayList<XMLObject>();
+		
+		// The Reference object for #formData Object
 		Reference contentRef = signatureFactory.newReference(
 				"#formData", 
 				signatureFactory.newDigestMethod(DigestMethod.SHA1, null),
-				Collections.singletonList(refTransform), null, null);
+				Collections.singletonList(transform), 
+				null, 
+				null);
+		references.add(contentRef);
 		
         // Create an XMLObject that corresponds to the formDataDoc DOM Document
         // that we want to include in the Signature
-		Node contentNode = contentDoc.getDocumentElement();
-        XMLStructure content = new DOMStructure(contentNode);
-        XMLObject contentObj = signatureFactory.newXMLObject(
-        		Collections.singletonList(content), 
+		Node formDataNode = formDataDoc.getDocumentElement();
+        XMLStructure formDataStructure = new DOMStructure(formDataNode);
+        XMLObject formDataObj = signatureFactory.newXMLObject(
+        		Collections.singletonList(formDataStructure), 
         		"formData", 
         		null, 
         		"UTF-8");
+        objects.add(formDataObj);
+        
+        if (nonce != null) {
+        	// When nonce is supplied, create Reference for Object to
+        	// hold nonce value
+    		Reference nonceRef = signatureFactory.newReference(
+    				"#nonce", 
+    				signatureFactory.newDigestMethod(DigestMethod.SHA1, null),
+    				Collections.singletonList(transform), 
+    				null, 
+    				null);
+    		references.add(nonceRef);
+
+    		Document nonceDoc = XmldsigStrategy.builder.newDocument();
+    		
+    		Element valueElem = nonceDoc.createElement("value");
+    		valueElem.setTextContent(nonce);
+    		nonceDoc.appendChild(valueElem);
+    		
+    		Node nonceNode = nonceDoc.getDocumentElement();
+    		XMLStructure nonceStructure = new DOMStructure(nonceNode);
+    		XMLObject nonceObj = signatureFactory.newXMLObject(
+    				Collections.singletonList(nonceStructure), 
+    				"nonce", 
+    				null, 
+    				"UTF-8");
+    		objects.add(nonceObj);
+        }
 
         // Create the SignedInfo structure
         //
@@ -100,7 +136,7 @@ public class XmldsigSigner {
 						CanonicalizationMethod.EXCLUSIVE, 
 						(C14NMethodParameterSpec) null),
 				signatureFactory.newSignatureMethod(SignatureMethod.RSA_SHA1, null), 
-				Collections.singletonList(contentRef));
+				references);
 
         KeyInfoFactory kif = signatureFactory.getKeyInfoFactory();
         List<XMLStructure> keyInfoContent = new ArrayList<XMLStructure>();
@@ -115,7 +151,7 @@ public class XmldsigSigner {
         XMLSignature signature = signatureFactory.newXMLSignature(
         		si, 
         		ki, 
-        		Collections.singletonList(contentObj), 
+        		objects, 
         		null, 
         		null);
         
@@ -132,10 +168,11 @@ public class XmldsigSigner {
 	public Document sign(
 			PrivateKey privateKey,
 			X509Certificate certificate,
-			Document content) 
+			Document content,
+			String nonce) 
 	throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, 
 	ParserConfigurationException, MarshalException, XMLSignatureException {
-		return sign(privateKey, new X509Certificate[] { certificate }, content);
+		return sign(privateKey, new X509Certificate[] { certificate }, content, nonce);
 	}
 	
 }
