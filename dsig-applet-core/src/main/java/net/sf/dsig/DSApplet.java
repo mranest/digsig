@@ -69,7 +69,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.1.0-20100920";
+	private static final String DSAPPLET_VERSION = "2.1.0-20101123";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -137,6 +137,19 @@ public class DSApplet extends JApplet {
 	
 	public void setNoCertificatesJSFunction(String noCertificatesJSFunction) {
 		this.noCertificatesJSFunction = noCertificatesJSFunction;
+	}
+	
+	/**
+	 * <p>The name of the JavaScript function to invoke when the applet
+	 * has started.
+	 * 
+	 * <p>The method is called as follows:
+	 * <pre><i>startedJSFunction();
+	 */
+	private String startedJSFunction = null;
+	
+	public void setStartedJSFunction(String startedJSFunction) {
+		this.startedJSFunction = startedJSFunction;
 	}
 	
 	/**
@@ -375,18 +388,24 @@ public class DSApplet extends JApplet {
 	
 	@Override
 	public void start() {
-		// Add a small delay before printing the status; otherwise it will
-		// be overridden by the '..Applet started' Plug-In message
-		if (statusBarMessageShown) {
-			new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try { Thread.sleep(500); } catch (InterruptedException e) { }
+		// Add a small delay before performing the started operations (in
+		// the case of status printing it will otherwise be overridden by 
+		// the '..Applet started' Plug-In message)
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try { Thread.sleep(500); } catch (InterruptedException e) { }
+				
+				if (statusBarMessageShown) {
 					showStatus("Digital Signature Applet - " +
 							DSAPPLET_VERSION);
 				}
-			}).start();
-		}
+				
+				if (startedJSFunction != null) {
+					LiveConnectProxy.getSingleton().eval(startedJSFunction + "();");
+				}
+			}
+		}).start();
 		
 		started = true;
 		

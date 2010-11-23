@@ -130,6 +130,9 @@ DSApplet.prototype = {
 	setNoCertificatesJSFunction: function (noCertificatesJSFunction) {
 		this.noCertificatesJSFunction = noCertificatesJSFunction;
 	},
+	setStartedJSFunction: function (startedJSFunction) {
+		this.startedJSFunction = startedJSFunction;
+	},
 	setExpirationDateChecked: function (expirationDateChecked) {
 		this.expirationDateChecked = expirationDateChecked;
 	},
