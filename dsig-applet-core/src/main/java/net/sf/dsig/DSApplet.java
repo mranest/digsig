@@ -69,7 +69,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.1.0-20101123";
+	private static final String DSAPPLET_VERSION = "2.1.0-20101207";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -244,6 +244,16 @@ public class DSApplet extends JApplet {
 		this.statusBarMessageShown = statusBarMessageShown;
 	}
 	
+	private String userAgent;
+	
+	public void setUserAgent(String userAgent) {
+		this.userAgent = userAgent;
+	}
+	
+	public String getUserAgent() {
+		return userAgent;
+	}
+	
 	@Override
 	public String[][] getParameterInfo() {
 		return new String[][] {
@@ -257,6 +267,8 @@ public class DSApplet extends JApplet {
 					"name of JS function to execute on failed signing; called with no arguments (i.e. onError(); )" },
 				{ 	"noCertificatesJSFunction", "String", 
 					"name of JS function to execute when no certificates exist; called with no arguments (i.e. onNoCertificates(); )" },
+				{ 	"startedJSFunction", "String", 
+					"name of JS function to execute when applet has started; called with no arguments (i.e. onNoCertificates(); )" },
 				{ 	"issuerNameRegex", "String", 
 					"regular expression to match issuer's name for acceptance" },
 				{ 	"subjectNameRegex", "String", 

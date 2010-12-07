@@ -51,9 +51,9 @@ public class LiveConnectProxy {
 	
 	protected LiveConnectProxy() { }
 
-	private JApplet applet;
+	private DSApplet applet;
 	
-	public void setApplet(JApplet applet) {
+	public void setApplet(DSApplet applet) {
 		this.applet = applet;
 	}
 	
@@ -77,9 +77,15 @@ public class LiveConnectProxy {
 	public String getUserAgent() {
 		if (userAgent == null) {
 			try {
-				userAgent = eval("navigator.userAgent").toString();
-			} catch (JSException e) {
-				logger.warn("navigator.userAgent evaluation failed; falling back to MSIE default");
+				userAgent = applet.getUserAgent();
+
+				if (userAgent == null) {
+					// Fallback to invoking navigator.userAgent through JS, if
+					// it has not been set as an applet parameter
+					userAgent = eval("navigator.userAgent").toString();
+				}
+			} catch (Exception e) {
+				logger.warn("navigator.userAgent evaluation failed; falling back to MSIE default", e);
 				userAgent = MSIE_USER_AGENT_DEFAULT;
 			}
 		}

@@ -182,6 +182,7 @@ DSApplet.prototype = {
 			document.write('        width="' + width + '" height="' + height + '">');
 			document.write('	<param name="code" value="net.sf.dsig.DSApplet.class" />');
 			document.write('	<param name="archive" value="' + this.jarUrl + '" />');
+			document.write('    <param name="userAgent" value="' + window.navigator.userAgent + '" />');
 			document.write('	<param name="mayscript" value="true" />');
 			for (var i in this) {
 				if (typeof this[i] == 'string') {
@@ -194,6 +195,7 @@ DSApplet.prototype = {
 			document.write('        width="' + width + '" height="' + height + '"');
 			document.write('		type="application/x-java-applet;version=1.6"');
 			document.write('		pluginspage="http://java.com/en/download/index.jsp"');
+			document.write('    	userAgent="' + window.navigator.userAgent + '"');
 			document.write('		mayscript="true"');
 			for (var i in this) {
 				if (typeof this[i] == 'string') {
@@ -211,6 +213,7 @@ DSApplet.prototype = {
 			innerHtml += '        width="' + width + '" height="' + height + '">';
 			innerHtml += '	<param name="code" value="net.sf.dsig.DSApplet.class" />';
 			innerHtml += '	<param name="archive" value="' + this.jarUrl + '" />';
+			innerHtml += '  <param name="userAgent" value="' + window.navigator.userAgent + '" />';
 			innerHtml += '	<param name="mayscript" value="true" />';
 			for (var i in this) {
 				if (typeof this[i] == 'string') {
@@ -223,6 +226,7 @@ DSApplet.prototype = {
 			innerHtml += '        width="' + width + '" height="' + height + '"';
 			innerHtml += '		type="application/x-java-applet;version=1.6"';
 			innerHtml += '		pluginspage="http://java.com/en/download/index.jsp"';
+			innerHtml += '    	userAgent="' + window.navigator.userAgent + '"';
 			innerHtml += '		mayscript="true"';
 			for (var i in this) {
 				if (typeof this[i] == 'string') {
