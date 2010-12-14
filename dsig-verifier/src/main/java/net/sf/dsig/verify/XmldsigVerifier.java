@@ -30,9 +30,7 @@ import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.PKIXCertPathValidatorResult;
 import java.security.cert.PKIXParameters;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -204,10 +202,14 @@ public class XmldsigVerifier {
 		}
 		
 		if (crlHelper != null && !crlHelper.isValid(certificate)) {
+			logger.warn("CRL validation failed");
+			
 			return false;
 		}
 		
 		if (ocspHelper != null && !ocspHelper.isValid(certificate)) {
+			logger.warn("OCSP validation failed");
+			
 			return false;
 		}
 		
