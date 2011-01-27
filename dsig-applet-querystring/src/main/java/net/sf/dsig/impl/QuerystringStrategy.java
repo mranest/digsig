@@ -141,10 +141,11 @@ public class QuerystringStrategy implements Strategy {
 			X509Certificate[] certificateChain)
 	throws Exception {
 		String plaintext = contentHandler.getPlaintext();
-		Signature signature = Signature.getInstance(signatureAlgorithm);
-		signature.initSign(privateKey);
-		signature.update(plaintext.getBytes());
-		String signatureAsString = new String(Base64.encodeBase64(signature.sign()));
+		
+		String signatureAsString = signPlaintext(
+				plaintext,
+				privateKey,
+				certificateChain);
 		
 		if (signatureElement != null) {
 			LiveConnectProxy.getSingleton().eval(
@@ -169,6 +170,26 @@ public class QuerystringStrategy implements Strategy {
 		} else {
 			logger.warn("No serialNumberElement set");
 		}
+	}
+	
+	@Override
+	public String signPlaintext(
+			String plaintext,
+			PrivateKey privateKey, 
+			X509Certificate[] certificateChain) throws Exception {
+		Signature signature = Signature.getInstance(signatureAlgorithm);
+		signature.initSign(privateKey);
+		signature.update(plaintext.getBytes());
+
+		// TODO Return serial number of certificate used to sign in the 
+		// returned String, as a JSON array "[ '', '' ]"
+		String signatureAsBase64 = new String(Base64.encodeBase64(signature.sign()));
+		
+		String serialNumberAsString = serialNumberInHexadecimal ?
+				HexStringHelper.toHexString(certificateChain[0].getSerialNumber().toByteArray()) :
+				"" + certificateChain[0].getSerialNumber();
+
+		return "{ \"signature\": \"" + signatureAsBase64 + "\", \"serialNumber\": \"" + serialNumberAsString + "\" }";
 	}
 
 	private class QuerystringContentHandler implements FormContentHandler {

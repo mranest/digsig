@@ -69,7 +69,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.1.0-20101207";
+	private static final String DSAPPLET_VERSION = "2.2.0-20110127";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -283,6 +283,8 @@ public class DSApplet extends JApplet {
 					"list of required key usage purposes" },
 				{	"statusBarMessageShown", "String",
 					"true to display in the status bar the version message (default); false otherwise" },
+				{	"userAgent", "String",
+					"Enclosing browser's user agent" },
 		};
 	}
 	
@@ -471,6 +473,35 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
+	public String signPlaintext(final String plaintext, final String alias) {
+		if (!SwingUtilities.isEventDispatchThread()) {
+			logger.debug("Not in Swing's event dispatch thread");
+			
+			class MyRunnable implements Runnable {
+				public volatile String jsonResponse =  null;
+				@Override
+				public void run() {
+					jsonResponse = signPlaintextInternal(plaintext, alias);
+				}
+			};
+			
+			MyRunnable mr = new MyRunnable();
+			
+			try {
+				executeInThread(mr);
+				return mr.jsonResponse;
+			} catch (Exception e) {
+				logger.warn("Exception in sign()", e);
+				
+				return null;
+			}
+		} else {
+			logger.debug("In Swing's event dispatch thread");
+
+			return signPlaintextInternal(plaintext, alias);
+		}
+	}
+	
 	public boolean hasCertificates() {
 		class MyRunnable implements Runnable {
 			public volatile boolean successful = false;
@@ -568,6 +599,46 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
+	private String getSelectedAlias(
+			KeyStoreProxy proxy,
+			Map<String, X509Certificate[]> aliasX509CertificateChainPair, 
+			Profiler profiler) {
+		profiler.start("Keypair filtering");
+		
+		try {
+			aliasX509CertificateChainPair = createAliasX509CertificateChainPair(proxy);
+		} catch (Exception e) {
+			handleError("DSA0002", e);
+		}
+		
+		if (aliasX509CertificateChainPair.isEmpty()) {
+			if (noCertificatesJSFunction != null) {
+				LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
+				
+				return null;
+			} else {
+				logger.debug("noCertificatesJSFunction not set");
+			}
+		}
+		
+		profiler.start("User selection");
+		
+		CertificateTableModel ctm = new CertificateTableModel(
+					aliasX509CertificateChainPair,
+					messages);
+		Environment.getSingleton().init(ctm);
+		
+		SelectCertificateDialog scd = new SelectCertificateDialog(
+				ctm,
+				expirationDateChecked,
+				messages);
+		
+		scd.setModalityType(ModalityType.APPLICATION_MODAL);
+		scd.setVisible(true);
+
+		return scd.getSelectedAlias();
+	}
+	
 	private boolean signInternal(String formId, String alias) {
 		Profiler profiler = new Profiler("SIGNATURE");
 		profiler.setLogger(logger);
@@ -586,43 +657,14 @@ public class DSApplet extends JApplet {
 				new HashMap<String, X509Certificate[]>();
 
 		if (alias == null) {
-			profiler.start("Keypair filtering");
-			
-			try {
-				aliasX509CertificateChainPair = createAliasX509CertificateChainPair(proxy);
-			} catch (Exception e) {
-				handleError("DSA0002", e);
-			}
-			
-			if (aliasX509CertificateChainPair.isEmpty()) {
-				if (noCertificatesJSFunction != null) {
-					LiveConnectProxy.getSingleton().eval(noCertificatesJSFunction + "();");
-					
-					return false;
-				} else {
-					logger.debug("noCertificatesJSFunction not set");
-				}
-			}
-			
-			profiler.start("User selection");
-			
-			CertificateTableModel ctm = new CertificateTableModel(
-						aliasX509CertificateChainPair,
-						messages);
-			Environment.getSingleton().init(ctm);
-			
-			SelectCertificateDialog scd = new SelectCertificateDialog(
-					ctm,
-					expirationDateChecked,
-					messages);
-			
-			scd.setModalityType(ModalityType.APPLICATION_MODAL);
-			scd.setVisible(true);
-	
-			alias = scd.getSelectedAlias();
-			if (alias == null) {
-				return false;
-			}
+			alias = getSelectedAlias(
+					proxy, 
+					aliasX509CertificateChainPair, 
+					profiler);
+		}
+		
+		if (alias == null) {
+			return false;
 		}
 		
 		logger.debug("Selected alias: [{}]", alias);
@@ -669,6 +711,74 @@ public class DSApplet extends JApplet {
 		}
 		
 		return true;
+		
+		} finally {
+			profiler.stop().log();
+		}
+	}
+	
+	public String signPlaintextInternal(final String plaintext, String alias) {
+		Profiler profiler = new Profiler("PLAINTEXT SIGNATURE");
+		profiler.setLogger(logger);
+		
+		try { // Only for the purpose of stopping the Profiler on final 
+			
+		if (!started) {
+			return null;
+		}
+		
+		profiler.start("Keystore creation");
+		
+		KeyStoreProxy proxy = getKeyStoreProxy();
+		
+		Map<String, X509Certificate[]> aliasX509CertificateChainPair = 
+				new HashMap<String, X509Certificate[]>();
+
+		if (alias == null) {
+			alias = getSelectedAlias(
+					proxy, 
+					aliasX509CertificateChainPair, 
+					profiler);
+		}
+		
+		if (alias == null) {
+			return null;
+		}
+		
+		logger.debug("Selected alias: [{}]", alias);
+		
+		PrivateKey privateKey = null;
+		try {
+			privateKey = proxy.getPrivateKey(alias);
+		} catch (Exception e) {
+			handleError("DSA0003", e);
+		}
+
+		X509Certificate[] certificateChain = null;
+		try {
+			certificateChain = proxy.getX509CertificateChain(alias);
+		} catch (Exception e) {
+			handleError("DSA0004", e);
+		}
+		
+		Strategy strategy = strategyFactory.getStrategy();
+		
+		profiler.start("Signature strategy");
+		
+		String jsonResponse = null;
+		try {
+			jsonResponse = strategy.signPlaintext(plaintext, privateKey, certificateChain);
+		} catch (Exception e) {
+			handleError("DSA0006", e);
+		}
+		
+		if (successJSFunction != null) {
+			LiveConnectProxy.getSingleton().eval(successJSFunction + "();");
+		} else {
+			logger.debug("successJSFunction not set");
+		}
+		
+		return jsonResponse;
 		
 		} finally {
 			profiler.stop().log();

@@ -47,6 +47,18 @@ public class DebugStrategy implements Strategy {
 		logger.debug("CertificateChain=" + Arrays.asList(certificateChain).toString());
 	}
 	
+	@Override
+	public String signPlaintext(
+			String plaintext, 
+			PrivateKey privateKey,
+			X509Certificate[] certificateChain) throws Exception {
+		logger.debug("Plaintext=" + plaintext);
+		logger.debug("PrivateKey=" + privateKey);
+		logger.debug("CertificateChain=" + Arrays.asList(certificateChain).toString());
+		
+		return "Signed: " + plaintext;
+	}
+	
 	private class DebugContentHandler implements FormContentHandler {
 
 		@Override

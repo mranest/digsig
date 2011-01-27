@@ -26,4 +26,10 @@ public interface Strategy {
 	void sign(PrivateKey privateKey, X509Certificate[] certificateChain)
 	throws Exception;
 	
+	String signPlaintext(
+			String plaintext,
+			PrivateKey privateKey, 
+			X509Certificate[] certificateChain) 
+	throws Exception;
+	
 }

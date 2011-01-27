@@ -181,6 +181,7 @@ DSApplet.prototype = {
 			document.write('		codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"');
 			document.write('        width="' + width + '" height="' + height + '">');
 			document.write('	<param name="code" value="net.sf.dsig.DSApplet.class" />');
+			document.write('	<param name="codebase_lookup" value="false" />');
 			document.write('	<param name="archive" value="' + this.jarUrl + '" />');
 			document.write('    <param name="userAgent" value="' + window.navigator.userAgent + '" />');
 			document.write('	<param name="mayscript" value="true" />');
@@ -194,6 +195,7 @@ DSApplet.prototype = {
 			document.write('<embed  id="dsigApplet" code="net.sf.dsig.DSApplet.class" archive="' + this.jarUrl + '"');
 			document.write('        width="' + width + '" height="' + height + '"');
 			document.write('		type="application/x-java-applet;version=1.6"');
+			document.write('		codebase_lookup="false"');
 			document.write('		pluginspage="http://java.com/en/download/index.jsp"');
 			document.write('    	userAgent="' + window.navigator.userAgent + '"');
 			document.write('		mayscript="true"');
@@ -212,6 +214,7 @@ DSApplet.prototype = {
 			innerHtml += '		  codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"';
 			innerHtml += '        width="' + width + '" height="' + height + '">';
 			innerHtml += '	<param name="code" value="net.sf.dsig.DSApplet.class" />';
+			innerHtml += '	<param name="codebase_lookup" value="false" />';
 			innerHtml += '	<param name="archive" value="' + this.jarUrl + '" />';
 			innerHtml += '  <param name="userAgent" value="' + window.navigator.userAgent + '" />';
 			innerHtml += '	<param name="mayscript" value="true" />';
@@ -225,6 +228,7 @@ DSApplet.prototype = {
 			innerHtml += '<embed  id="dsigApplet" code="net.sf.dsig.DSApplet.class" archive="' + this.jarUrl + '"';
 			innerHtml += '        width="' + width + '" height="' + height + '"';
 			innerHtml += '		type="application/x-java-applet;version=1.6"';
+			innerHtml += '		codebase_lookup="false"';
 			innerHtml += '		pluginspage="http://java.com/en/download/index.jsp"';
 			innerHtml += '    	userAgent="' + window.navigator.userAgent + '"';
 			innerHtml += '		mayscript="true"';
@@ -240,6 +244,9 @@ DSApplet.prototype = {
 	},
 	signForm: function (form, alias) {
 		return document.getElementById('dsigApplet').sign(form, alias);
+	},
+	signPlaintext: function (plaintext, alias) {
+		return document.getElementById('dsigApplet').signPlaintext(plaintext, alias);
 	},
 	hasCertificates: function () {
 		return document.getElementById('dsigApplet').hasCertificates();

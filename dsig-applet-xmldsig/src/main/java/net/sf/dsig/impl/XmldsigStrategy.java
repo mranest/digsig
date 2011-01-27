@@ -16,6 +16,7 @@
 
 package net.sf.dsig.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
@@ -121,30 +122,6 @@ public class XmldsigStrategy implements Strategy {
 		return contentHandler;
 	}
 
-	@Override
-	public void sign(PrivateKey privateKey, X509Certificate[] certificateChain) 
-	throws Exception {
-		Document signatureDocument = 
-			new XmldsigSigner().sign(
-					privateKey, 
-					certificateChain, 
-					contentHandler.getContentDocument(),
-					nonce);
-
-		Transformer t = TransformerFactory.newInstance().newTransformer();
-		StringWriter w = new StringWriter();
-		t.transform(new DOMSource(signatureDocument), new StreamResult(w));
-		
-		String base64Encoded = new String(Base64.encodeBase64(w.toString().getBytes("UTF-8")));
-		
-		if (signatureElement != null) {
-			LiveConnectProxy.getSingleton().eval(
-					"document.getElementById('" + formId + "').elements['" + signatureElement + "'].value = \"" + base64Encoded + "\";");
-		} else {
-			logger.warn("No signatureElement set; signatureDocument=\n" + w.toString());
-		}
-	}
-
 	static final DocumentBuilder builder;
 	
 	static {
@@ -155,6 +132,54 @@ public class XmldsigStrategy implements Strategy {
 		} catch (ParserConfigurationException e) {
 			throw new RuntimeException(e);
 		}
+	}
+	
+	@Override
+	public void sign(PrivateKey privateKey, X509Certificate[] certificateChain) 
+	throws Exception {
+		String base64Encoded = signInternal(
+				contentHandler.getContentDocument(), 
+				privateKey, 
+				certificateChain);
+
+		if (signatureElement != null) {
+			LiveConnectProxy.getSingleton().eval(
+					"document.getElementById('" + formId + "').elements['" + signatureElement + "'].value = \"" + base64Encoded + "\";");
+		} else {
+			logger.warn("No signatureElement set; signatureDocument=\n" + base64Encoded);
+		}
+	}
+
+	@Override
+	public String signPlaintext(
+			String plaintext, 
+			PrivateKey privateKey,
+			X509Certificate[] certificateChain) throws Exception {
+		return signInternal(
+				builder.parse(
+						new ByteArrayInputStream(
+								("<plaintext><![CDATA[" + plaintext + "]]></plaintext>").getBytes("UTF-8"))),
+				privateKey,
+				certificateChain);
+	}
+	
+	private String signInternal(
+			Document contentDocument,
+			PrivateKey privateKey,
+			X509Certificate[] certificateChain)
+	throws Exception {
+		Document signatureDocument = 
+			new XmldsigSigner().sign(
+					privateKey, 
+					certificateChain, 
+					contentDocument,
+					nonce);
+
+		Transformer t = TransformerFactory.newInstance().newTransformer();
+		StringWriter w = new StringWriter();
+		t.transform(new DOMSource(signatureDocument), new StreamResult(w));
+		
+		return new String(Base64.encodeBase64(w.toString().getBytes("UTF-8")));
 	}
 	
 	private class XmldsigContentHandler implements FormContentHandler {
