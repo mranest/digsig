@@ -64,7 +64,8 @@ public class XmldsigSigner {
 	public Document sign(
 			PrivateKey signingKey,
 			X509Certificate[] certificateChain,
-			Document formDataDoc,
+			Document contentDocument,
+			String contentId,
 			String nonce) 
 	throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, 
 	ParserConfigurationException, MarshalException, XMLSignatureException {
@@ -78,7 +79,7 @@ public class XmldsigSigner {
 		
 		// The Reference object for #formData Object
 		Reference contentRef = signatureFactory.newReference(
-				"#formData", 
+				"#" + contentId, 
 				signatureFactory.newDigestMethod(DigestMethod.SHA1, null),
 				Collections.singletonList(transform), 
 				null, 
@@ -87,20 +88,22 @@ public class XmldsigSigner {
 		
         // Create an XMLObject that corresponds to the formDataDoc DOM Document
         // that we want to include in the Signature
-		Node formDataNode = formDataDoc.getDocumentElement();
+		Node formDataNode = contentDocument.getDocumentElement();
         XMLStructure formDataStructure = new DOMStructure(formDataNode);
         XMLObject formDataObj = signatureFactory.newXMLObject(
         		Collections.singletonList(formDataStructure), 
-        		"formData", 
+        		contentId, 
         		null, 
         		"UTF-8");
         objects.add(formDataObj);
         
         if (nonce != null) {
+        	String nonceId = "nonce";
+        	
         	// When nonce is supplied, create Reference for Object to
         	// hold nonce value
     		Reference nonceRef = signatureFactory.newReference(
-    				"#nonce", 
+    				"#" + nonceId, 
     				signatureFactory.newDigestMethod(DigestMethod.SHA1, null),
     				Collections.singletonList(transform), 
     				null, 
@@ -117,7 +120,7 @@ public class XmldsigSigner {
     		XMLStructure nonceStructure = new DOMStructure(nonceNode);
     		XMLObject nonceObj = signatureFactory.newXMLObject(
     				Collections.singletonList(nonceStructure), 
-    				"nonce", 
+    				nonceId, 
     				null, 
     				"UTF-8");
     		objects.add(nonceObj);
@@ -168,11 +171,17 @@ public class XmldsigSigner {
 	public Document sign(
 			PrivateKey privateKey,
 			X509Certificate certificate,
-			Document content,
+			Document contentDocument,
+			String contentId,
 			String nonce) 
 	throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, 
 	ParserConfigurationException, MarshalException, XMLSignatureException {
-		return sign(privateKey, new X509Certificate[] { certificate }, content, nonce);
+		return sign(
+				privateKey, 
+				new X509Certificate[] { certificate }, 
+				contentDocument,
+				contentId,
+				nonce);
 	}
 	
 }

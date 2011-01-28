@@ -37,7 +37,7 @@ public class XmldsigSignerTest {
 		
 		XmldsigSigner signer = new XmldsigSigner();
 		
-		Document sd = signer.sign(privateKey, certificateChain, d, "nonce");
+		Document sd = signer.sign(privateKey, certificateChain, d, "formData", "nonce");
 		
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer t = tf.newTransformer();

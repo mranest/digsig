@@ -16,7 +16,6 @@
 
 package net.sf.dsig.impl;
 
-import java.io.ByteArrayInputStream;
 import java.io.StringWriter;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
@@ -139,6 +138,7 @@ public class XmldsigStrategy implements Strategy {
 	throws Exception {
 		String base64Encoded = signInternal(
 				contentHandler.getContentDocument(), 
+				"formData",
 				privateKey, 
 				certificateChain);
 
@@ -155,16 +155,22 @@ public class XmldsigStrategy implements Strategy {
 			String plaintext, 
 			PrivateKey privateKey,
 			X509Certificate[] certificateChain) throws Exception {
+		Document contentDocument = builder.newDocument();
+		
+		Element valueElem = contentDocument.createElement("value");
+		valueElem.setTextContent(plaintext);
+		contentDocument.appendChild(valueElem);
+		
 		return signInternal(
-				builder.parse(
-						new ByteArrayInputStream(
-								("<plaintext><![CDATA[" + plaintext + "]]></plaintext>").getBytes("UTF-8"))),
+				contentDocument,
+				"plaintext",
 				privateKey,
 				certificateChain);
 	}
 	
 	private String signInternal(
 			Document contentDocument,
+			String contentId,
 			PrivateKey privateKey,
 			X509Certificate[] certificateChain)
 	throws Exception {
@@ -173,6 +179,7 @@ public class XmldsigStrategy implements Strategy {
 					privateKey, 
 					certificateChain, 
 					contentDocument,
+					contentId,
 					nonce);
 
 		Transformer t = TransformerFactory.newInstance().newTransformer();
