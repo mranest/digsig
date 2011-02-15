@@ -30,8 +30,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,14 +109,15 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 			
 			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
 				private final String alias = originalAlias + "-" + each.hashCode();
-				private final Object entry = each;
+				private final PrivateKey privateKey = (PrivateKey) getField(each, "privateKey");
+				private final X509Certificate[] certChain = (X509Certificate[]) getField(each, "certChain");
 				@Override
 				public String getAlias() {
 					return alias;
 				}
 				@Override
 				public PrivateKey getPrivateKey() {
-					return (PrivateKey) getField(entry, "privateKey");
+					return privateKey;
 				}
 				@Override
 				public X509Certificate getX509Certificate() {
@@ -126,7 +127,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 				}
 				@Override
 				public X509Certificate[] getX509CertificateChain() {
-					return (X509Certificate[]) getField(entry, "certChain");
+					return certChain;
 				}
 				@Override
 				public boolean isKeyEntry() {
