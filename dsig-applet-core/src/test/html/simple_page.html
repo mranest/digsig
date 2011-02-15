@@ -8,7 +8,7 @@
 		function signForm() {
 			var certificates = document.getElementById('certificates');
 			var alias = certificates.options[certificates.selectedIndex].value;
-			dsapplet.signForm('form1', alias);
+			return dsapplet.signForm('form1', alias);
 		}
 		function onNoCertificates() {
 			alert("No certificates were found; I would be resubmitting right now");
@@ -93,7 +93,7 @@
 							// dsapplet.setSubjectMatchingRegex('.*OU=ERMIS_78566025.*');
 						</script>
 						<input name="popu" type="button" onclick="populatesCertificates();" value="Populate"/>
-						<input name="sign" type="button" onclick="signForm();" value="Sign"/>
+						<input name="sign" type="button" onclick="if (signForm()) { this.disabled = true; }" value="Sign"/>
 						<input name="subm" type="submit" value="Submit" />
 						<script>
 							dsapplet.printAppletDeclaration(16, 16);
