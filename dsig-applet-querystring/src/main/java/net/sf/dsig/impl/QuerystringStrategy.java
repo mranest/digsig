@@ -142,10 +142,9 @@ public class QuerystringStrategy implements Strategy {
 	throws Exception {
 		String plaintext = contentHandler.getPlaintext();
 		
-		String signatureAsString = signPlaintext(
+		String signatureAsString = signInternal(
 				plaintext,
-				privateKey,
-				certificateChain);
+				privateKey);
 		
 		if (signatureElement != null) {
 			LiveConnectProxy.getSingleton().eval(
@@ -181,9 +180,7 @@ public class QuerystringStrategy implements Strategy {
 		signature.initSign(privateKey);
 		signature.update(plaintext.getBytes());
 
-		// TODO Return serial number of certificate used to sign in the 
-		// returned String, as a JSON array "[ '', '' ]"
-		String signatureAsBase64 = new String(Base64.encodeBase64(signature.sign()));
+		String signatureAsBase64 = signInternal(plaintext, privateKey);
 		
 		String serialNumberAsString = serialNumberInHexadecimal ?
 				HexStringHelper.toHexString(certificateChain[0].getSerialNumber().toByteArray()) :
@@ -192,6 +189,16 @@ public class QuerystringStrategy implements Strategy {
 		return "{ \"signature\": \"" + signatureAsBase64 + "\", \"serialNumber\": \"" + serialNumberAsString + "\" }";
 	}
 
+	private String signInternal(
+			String plaintext,
+			PrivateKey privateKey) throws Exception {
+		Signature signature = Signature.getInstance(signatureAlgorithm);
+		signature.initSign(privateKey);
+		signature.update(plaintext.getBytes());
+		
+		return new String(Base64.encodeBase64(signature.sign()));
+	}
+	
 	private class QuerystringContentHandler implements FormContentHandler {
 
 		private StringBuilder plaintextSb = new StringBuilder();
