@@ -141,11 +141,62 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 		}
 	}
 	
-	public void addGenericKeyStore(final KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
-		addGenericKeyStore(keyStore, true); 
+	public void addAppleKeyStore(final KeyStore keyStore) throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
+		Enumeration<String> aliases = keyStore.aliases();
+		while (aliases.hasMoreElements()) {
+			final String alias = aliases.nextElement();
+			
+			KeyStoreEntryProxy proxy = new KeyStoreEntryProxy() {
+				final PrivateKey privateKey;
+				final X509Certificate[] certChain;
+				{
+					privateKey = (PrivateKey) keyStore.getKey(alias, "not-null".toCharArray());
+					// First try keyStore.getCertificateChain(...)
+					Certificate[] certificateChain = keyStore.getCertificateChain(alias);
+					if (certificateChain != null) {
+						certChain = new X509Certificate[certificateChain.length];
+						for (int i=0; i<certChain.length; i++) {
+							certChain[i] = (X509Certificate) certificateChain[i];
+						}
+					} else {
+						// Fall back to using keyStore.getCertificate(...)
+						X509Certificate certificate = (X509Certificate) keyStore.getCertificate(alias);
+						
+						if (certificate != null) {
+							certChain = new X509Certificate[1];
+							certChain[0] = certificate;
+						} else {
+							certChain = new X509Certificate[0];
+						}
+					}
+				}
+				@Override
+				public String getAlias() {
+					return alias;
+				}
+				@Override
+				public PrivateKey getPrivateKey() throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+					return privateKey;
+				}
+				@Override
+				public boolean isKeyEntry() throws UnrecoverableKeyException, KeyStoreException, NoSuchAlgorithmException {
+					return privateKey != null;
+				}
+				@Override
+				public X509Certificate[] getX509CertificateChain() throws KeyStoreException {
+					return certChain;
+				}
+				@Override
+				public X509Certificate getX509Certificate() throws KeyStoreException {
+					return certChain.length > 0 ? certChain[0] : null;
+				}
+			};
+			
+			addAliasedEntry(proxy);
+		}
 	}
 	
-	public void addGenericKeyStore(final KeyStore keyStore, final boolean passwordNull) 
+	public void addGenericKeyStore(final KeyStore keyStore) 
 	throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException {
 		Enumeration<String> aliases = keyStore.aliases();
 		while (aliases.hasMoreElements()) {
@@ -165,7 +216,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 					
 					return (PrivateKey) keyStore.getKey(
 							alias, 
-							passwordNull ? null : "not-null".toCharArray());
+							null);
 				}
 				@Override
 				public X509Certificate getX509Certificate() throws KeyStoreException {
@@ -229,7 +280,7 @@ public class MultipleKeyStoreProxy implements KeyStoreProxy {
 			
 			addSunMSCAPIKeyStore(keyStore);
 		} else if (keyStore.getProvider().getName().equals(APPLE_PROVIDER)) {
-			addGenericKeyStore(keyStore, false);
+			addAppleKeyStore(keyStore);
 		} else {
 			addGenericKeyStore(keyStore);
 		}
