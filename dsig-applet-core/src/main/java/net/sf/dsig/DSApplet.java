@@ -68,7 +68,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.2.0-20110216";
+	private static final String DSAPPLET_VERSION = "2.2.0-20110217";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -474,7 +474,11 @@ public class DSApplet extends JApplet {
 		SignInternalRunnable sir = new SignInternalRunnable();
 		
 		try {
-			SwingUtilities.invokeAndWait(sir);
+			if (! SwingUtilities.isEventDispatchThread()) {
+				SwingUtilities.invokeAndWait(sir);
+			} else {
+				sir.run();
+			}
 			
 			return sir.isSuccessful();
 		} catch (Exception e) {
@@ -513,7 +517,11 @@ public class DSApplet extends JApplet {
 		SignPlaintextInternalRunnable spir = new SignPlaintextInternalRunnable();
 		
 		try {
-			SwingUtilities.invokeAndWait(spir);
+			if (! SwingUtilities.isEventDispatchThread()) {
+				SwingUtilities.invokeAndWait(spir);
+			} else {
+				spir.run();
+			}
 			
 			return spir.getJsonResponse();
 		} catch (Exception e) {
