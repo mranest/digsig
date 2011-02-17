@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -68,7 +69,7 @@ public class DSApplet extends JApplet {
 	private static final org.slf4j.Logger logger = 
 			LoggerFactory.getLogger(DSApplet.class);
 	
-	private static final String DSAPPLET_VERSION = "2.2.0-20110217";
+	private static final String DSAPPLET_VERSION = "2.2.0-20110218";
 	
 	private static final Profiler initProfiler = new Profiler("INITIALIZATION");
 	
@@ -290,7 +291,11 @@ public class DSApplet extends JApplet {
 	// Only lookup .properties files
 	private ResourceBundle messages = ResourceBundle.getBundle("messages",
 			ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES));
-	
+
+	// The synchronization lock; created with zero permits, the one and
+	// only available permit will be released when initialization is completed
+	private final Semaphore available = new Semaphore(0);
+
 	private void initSwing() {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -311,10 +316,13 @@ public class DSApplet extends JApplet {
 			JButton button = new JButton("Sign", lockIcon);
 			button.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
+					available.acquireUninterruptibly();
 					try {
 						signInternal(formId, null);
 					} catch (Exception ex) { 
 						logger.error("Internal sign failed", e);
+					} finally {
+						available.release();
 					}
 				}
 			});
@@ -405,10 +413,18 @@ public class DSApplet extends JApplet {
 		initProfiler.start("Starting");
 	}
 	
-	private boolean started = false;
-	
 	@Override
 	public void start() {
+		available.release();
+
+		initProfiler.setLogger(logger);
+		
+		initProfiler.stop().log();
+
+		if (startedJSFunction != null) {
+			LiveConnectProxy.getSingleton().eval(startedJSFunction + "();");
+		}
+
 		// Add a small delay before performing the started operations (in
 		// the case of status printing it will otherwise be overridden by 
 		// the '..Applet started' Plug-In message)
@@ -422,17 +438,8 @@ public class DSApplet extends JApplet {
 							DSAPPLET_VERSION);
 				}
 				
-				if (startedJSFunction != null) {
-					LiveConnectProxy.getSingleton().eval(startedJSFunction + "();");
-				}
 			}
 		}).start();
-		
-		started = true;
-		
-		initProfiler.setLogger(logger);
-		
-		initProfiler.stop().log();
 	}
 
 	/**
@@ -454,13 +461,6 @@ public class DSApplet extends JApplet {
 	 * @since 2.1.0
 	 */
 	public boolean sign(final String formId, final String alias) {
-		if (alias != null) {
-			return signInternal(formId, alias);
-		}
-		
-		// Null alias means the certificate selection dialog box will pop-up; 
-		// hence, we need to be running in Swing's event dispatch thread
-
 		class SignInternalRunnable implements Runnable {
 			private boolean successful;
 			public boolean isSuccessful() {
@@ -473,7 +473,14 @@ public class DSApplet extends JApplet {
 		}
 		SignInternalRunnable sir = new SignInternalRunnable();
 		
+		available.acquireUninterruptibly();
 		try {
+			if (alias != null) {
+				return signInternal(formId, alias);
+			}
+			
+			// Null alias means the certificate selection dialog box will pop-up; 
+			// hence, we need to be running in Swing's event dispatch thread
 			if (! SwingUtilities.isEventDispatchThread()) {
 				SwingUtilities.invokeAndWait(sir);
 			} else {
@@ -485,6 +492,8 @@ public class DSApplet extends JApplet {
 			logger.error("Internal sign failed", e);
 			
 			return false;
+		} finally {
+			available.release();
 		}
 	}
 	
@@ -497,13 +506,6 @@ public class DSApplet extends JApplet {
 	 * @category JavaScript exposed method
 	 */
 	public String signPlaintext(final String plaintext, final String alias) {
-		if (alias != null) {
-			return signPlaintextInternal(plaintext, alias);
-		}
-
-		// Null alias means the certificate selection dialog box will pop-up; 
-		// hence, we need to be running in Swing's event dispatch thread
-		
 		class SignPlaintextInternalRunnable implements Runnable {
 			private String jsonResponse;
 			public String getJsonResponse() {
@@ -516,7 +518,14 @@ public class DSApplet extends JApplet {
 		}
 		SignPlaintextInternalRunnable spir = new SignPlaintextInternalRunnable();
 		
+		available.acquireUninterruptibly();
 		try {
+			if (alias != null) {
+				return signPlaintextInternal(plaintext, alias);
+			}
+
+			// Null alias means the certificate selection dialog box will pop-up; 
+			// hence, we need to be running in Swing's event dispatch thread
 			if (! SwingUtilities.isEventDispatchThread()) {
 				SwingUtilities.invokeAndWait(spir);
 			} else {
@@ -528,6 +537,8 @@ public class DSApplet extends JApplet {
 			logger.error("Internal sign plaintext failed", e);
 			
 			return "";
+		} finally {
+			available.release();
 		}
 	}
 	
@@ -537,18 +548,18 @@ public class DSApplet extends JApplet {
 	 * @category JavaScript exposed method
 	 */
 	public boolean hasCertificates() {
-		KeyStoreProxy proxy = getKeyStoreProxy();
-				
-		Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
-		
+		available.acquireUninterruptibly();
 		try {
-			aliasX509CertificateChainPair =
-				createAliasX509CertificateChainPair(proxy);
+			KeyStoreProxy proxy = getKeyStoreProxy();
+			
+			return !createAliasX509CertificateChainPair(proxy).isEmpty();
 		} catch (Exception e) {
 			handleError("DSA0002", e);
+			
+			return false;
+		} finally {
+			available.release();
 		}
-		
-		return !aliasX509CertificateChainPair.isEmpty();
 	}
 	
 	/**
@@ -558,52 +569,54 @@ public class DSApplet extends JApplet {
 	 * @category JavaScript exposed method
 	 */
 	public String getAliasedDescriptions() {
-		String json = "";
-		KeyStoreProxy proxy = getKeyStoreProxy();
-				
-		Map<String, X509Certificate[]> aliasX509CertificateChainPair = null;
-		
+		available.acquireUninterruptibly();
 		try {
-			aliasX509CertificateChainPair =
+			String json = "";
+			KeyStoreProxy proxy = getKeyStoreProxy();
+					
+			Map<String, X509Certificate[]> aliasX509CertificateChainPair =
 				createAliasX509CertificateChainPair(proxy);
+			CertificateTableModel ctm = new CertificateTableModel(
+					aliasX509CertificateChainPair, 
+					messages);
+			Environment.getSingleton().init(ctm);
+			
+			for (int i=0; i<ctm.getRowCount(); i++) {
+				X509Certificate certificate = ctm.getX509Certificate(i);
+				if (new Date().compareTo(certificate.getNotAfter()) > 0) {
+					continue;
+				}
+				
+				String alias = ctm.getAlias(i);
+				
+				// Column #0 is the name
+				// Column #1 is the friendly name
+				String name = (String) ctm.getValueAt(i, 0);
+				if (name != null) {
+					name = StringEscapeUtils.escapeJavaScript(name);
+				}
+				String friendlyName = (String) ctm.getValueAt(i, 1);
+				if (friendlyName != null) {
+					friendlyName = StringEscapeUtils.escapeJavaScript(friendlyName);
+				}
+				String compositeName = (friendlyName != null && friendlyName.length() > 0) ?
+						(friendlyName + " - " + name) :
+						name;
+						
+				String entry = "{ \"alias\": \"" + alias + "\", \"description\": \"" + compositeName + "\" }";
+				
+				if (json.length() > 0) { json += ", "; }
+				json += entry;
+			}
+			
+			return "[ " + json + " ]";
 		} catch (Exception e) {
 			handleError("DSA0002", e);
+			
+			return "";
+		} finally {
+			available.release();
 		}
-
-		CertificateTableModel ctm = new CertificateTableModel(
-				aliasX509CertificateChainPair, 
-				messages);
-		Environment.getSingleton().init(ctm);
-		
-		for (int i=0; i<ctm.getRowCount(); i++) {
-			X509Certificate certificate = ctm.getX509Certificate(i);
-			if (new Date().compareTo(certificate.getNotAfter()) > 0) {
-				continue;
-			}
-			
-			String alias = ctm.getAlias(i);
-			
-			// Column #0 is the name
-			// Column #1 is the friendly name
-			String name = (String) ctm.getValueAt(i, 0);
-			if (name != null) {
-				name = StringEscapeUtils.escapeJavaScript(name);
-			}
-			String friendlyName = (String) ctm.getValueAt(i, 1);
-			if (friendlyName != null) {
-				friendlyName = StringEscapeUtils.escapeJavaScript(friendlyName);
-			}
-			String compositeName = (friendlyName != null && friendlyName.length() > 0) ?
-					(friendlyName + " - " + name) :
-					name;
-					
-			String entry = "{ \"alias\": \"" + alias + "\", \"description\": \"" + compositeName + "\" }";
-			
-			if (json.length() > 0) { json += ", "; }
-			json += entry;
-		}
-		
-		return "[ " + json + " ]";
 	}
 	
 	private String getSelectedAlias(
@@ -652,10 +665,6 @@ public class DSApplet extends JApplet {
 		
 		try { // Only for the purpose of stopping the Profiler on final 
 			
-		if (!started) {
-			return false;
-		}
-		
 		profiler.start("Keystore creation");
 		
 		KeyStoreProxy proxy = getKeyStoreProxy();
@@ -724,16 +733,12 @@ public class DSApplet extends JApplet {
 		}
 	}
 	
-	public String signPlaintextInternal(final String plaintext, String alias) {
+	private String signPlaintextInternal(final String plaintext, String alias) {
 		Profiler profiler = new Profiler("PLAINTEXT SIGNATURE");
 		profiler.setLogger(logger);
 		
 		try { // Only for the purpose of stopping the Profiler on final 
 			
-		if (!started) {
-			return null;
-		}
-		
 		profiler.start("Keystore creation");
 		
 		KeyStoreProxy proxy = getKeyStoreProxy();
