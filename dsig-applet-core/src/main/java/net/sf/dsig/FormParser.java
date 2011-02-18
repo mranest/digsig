@@ -188,6 +188,8 @@ public class FormParser {
 		public final void onHTMLInputElement(HTMLInputElement element) {
 			String name = element.getName();
 			if (contentHandler.isElementExcluded(name)) {
+				logger.debug("Skipping excluded HtmlInputElement: name=" + element.getName());
+				
 				return;
 			}
 			
@@ -265,7 +267,9 @@ public class FormParser {
 			} catch (IOException e) {
 				logger.warn("I/O error: " + filename, e);
 			} catch (NoSuchAlgorithmException e) {
-				logger.warn("No such algorithm exception: " + e);
+				logger.warn("No such algorithm exception", e);
+			} catch (Exception e) {
+				logger.warn("Unhandled exception", e);
 			}
 		}
 		
