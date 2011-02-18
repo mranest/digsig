@@ -246,15 +246,16 @@ public class QuerystringStrategy implements Strategy {
 					}
 				}
 			}
-			
-			// Exclude the element that is configured to receive the xmldsig
-			if (name.equals(signatureElement)) {
+
+			if (	name.equals(signatureElement) ||
+					name.equals(plaintextElement) ||
+					name.equals(serialNumberElement)) {
 				return true;
 			}
 			
-			return 	name.equals(signatureElement) ||
-					name.equals(plaintextElement) ||
-					name.equals(serialNumberElement);
+			return excludedElementsSet.contains(name) ||
+				(	!includedElementsSet.isEmpty() && 
+					!includedElementsSet.contains(name));
 		}
 
 		@Override
