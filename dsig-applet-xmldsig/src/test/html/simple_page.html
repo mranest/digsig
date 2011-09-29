@@ -6,9 +6,12 @@
 		<script type="text/javascript" src="../../main/javascript/dsapplet.js"> </script>
 		<script type="text/javascript">
 		function signForm(form) {
-			var certificates = document.getElementById('certificates');
-			var alias = certificates.options[certificates.selectedIndex].value;
-			return dsapplet.signForm('form1', alias);
+			// var certificates = document.getElementById('certificates');
+			// var alias = certificates.options[certificates.selectedIndex].value;
+			return dsapplet.signForm('form1', null);
+		}
+		function signPlaintext(plaintext) {
+			return dsapplet.signPlaintext(plaintext, null);
 		}
 		function onNoCertificates() {
 			alert("No certificates were found; I would be resubmitting right now");
@@ -81,6 +84,7 @@
 						</script>
 						<input name="popu" type="button" onclick="populatesCertificates();" value="Populate"/>
 						<input name="sign" type="button" onclick="if (signForm()) { this.disabled = true; }" value="Sign"/>
+						<input name="psgn" type="button" onclick="alert(signPlaintext('arnaki aspro kai paxu'))" value="Plaintext Sign"/>
 						<input name="subm" type="submit" value="Submit" />
 						<script>
 							dsapplet.printAppletDeclaration(16, 16);
