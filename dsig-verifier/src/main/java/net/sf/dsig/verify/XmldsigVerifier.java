@@ -46,6 +46,7 @@ import org.apache.xml.security.signature.ObjectContainer;
 import org.apache.xml.security.signature.XMLSignature;
 import org.apache.xml.security.signature.XMLSignatureException;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 /**
@@ -122,6 +123,20 @@ public class XmldsigVerifier {
 		}
 		
 		return objectContainers;
+	}
+	
+	public Element getObjectElement(String id) throws VerificationException {
+		ObjectContainer[] objectContainers = getObjectContainers();
+		
+		for (int i=0; i<objectContainers.length; i++) {
+			ObjectContainer each = objectContainers[i];
+			String eachId = each.getElement().getAttribute("Id");
+			if (id.equals(eachId)) {
+				return each.getElement();
+			}
+		}
+		
+		return null;
 	}
 	
 	public X509Certificate[] getCertificateChain() throws VerificationException {
