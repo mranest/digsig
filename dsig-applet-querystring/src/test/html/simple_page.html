@@ -8,7 +8,7 @@
 		function signForm() {
 			var certificates = document.getElementById('certificates');
 			var alias = certificates.options[certificates.selectedIndex].value;
-			dsapplet.signForm('form1', alias);
+			dsapplet.signForm('form1');
 		}
 		function onNoCertificates() {
 			alert("No certificates were found; I would be resubmitting right now");
@@ -91,6 +91,8 @@
 							dsapplet.setPlaintextElement('plaintext');
 							dsapplet.setSignatureElement('signature');
 							dsapplet.setSerialNumberElement('serialNumber');
+							dsapplet.setStartedJSFunction('populatesCertificates');
+							// dsapplet.setExcludedElements('file');
 							// dsapplet.setSubjectMatchingRegex('.*OU=ERMIS_78566025.*');
 						</script>
 						<input name="popu" type="button" onclick="populatesCertificates();" value="Populate"/>
