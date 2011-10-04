@@ -16,8 +16,8 @@
 
 package net.sf.dsig.verify;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.cert.CRLException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -159,11 +159,12 @@ public class X509CRLHelper {
 					throw new NetworkAccessException("HTTP GET failed; statusLine=" + get.getStatusLine());
 				}
 				
-				InputStream is = get.getResponseBodyAsStream();
 				
 				X509CRL crl = null;
+				byte[] responseBodyBytes = get.getResponseBody();
 				try {
-					crl = (X509CRL) CertificateFactory.getInstance("X.509").generateCRL(is);
+					crl = (X509CRL) CertificateFactory.getInstance("X.509").generateCRL(
+							new ByteArrayInputStream(responseBodyBytes));
 				} catch (CertificateException e) {
 					throw new ConfigurationException("X.509 certificate factory missing");
 				}
