@@ -48,8 +48,8 @@
 									<classpath refid="maven.compile.classpath"/>
 								</taskdef>
 								<proguard configuration="proguard.pro"/>
-                					<signjar storepass="password" alias="alias" 
-                							keystore="../dsig-applet-core/src/main/config/keystore.jks" 
+                					<signjar storepass="password" alias="alias"
+                							keystore="../dsig-applet-core/src/main/config/keystore.jks"
                 							jar="${project.build.directory}/dsig-applet-complete.jar" />
 							</tasks>
 						</configuration>
@@ -64,7 +64,7 @@
 						<!-- Required for avoiding the unsafe components warning:
 							 http://java.sun.com/javase/6/docs/technotes/guides/jweb/mixed_code.html -->
 						<manifestEntries>
-							<Trusted-Only>true</Trusted-Only>
+							<Trusted-Library>true</Trusted-Library>
 						</manifestEntries>
 					</archive>
 				</configuration>
