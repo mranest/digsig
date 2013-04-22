@@ -879,7 +879,7 @@ public class DSApplet extends JApplet {
 	public String getAppletInfo() {
 		return "Digital Signature Applet - " +
 			DSAPPLET_VERSION +
-			"\nCopyright \u00a9 2007-2010 Anestis Georgiadis" +
+			"\nCopyright \u00a9 2007-2013 Anestis Georgiadis" +
 			"\nhttp://dsig.sourceforge.net";
 	}
 	
