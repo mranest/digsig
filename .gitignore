@@ -1,0 +1,9 @@
+.classpath
+.project
+.settings
+.svn
+.idea
+target
+*.iml
+atlassian-ide-plugin.xml
+dependency-reduced-pom.xml

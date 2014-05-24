@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="iso-8859-7"?>
-<form id="formId">
-    <input type="text" name="textName" value="textValue"/>
-    <input type="text" name="textName2" value="Κάτι Ελληνικό"/>
-</form>
