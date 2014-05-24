@@ -1,7 +1,7 @@
 digsig
 ======
 
-Digital Signature tools, or digsig, are an applet and a verifier,
+Digital Signature tools: an applet and a verifier,
 enabling an end-to-end digital signature worlflow. The exact algorithm
 used is configurable, as is the way the plaintext is constructed.
 

@@ -37,6 +37,24 @@
                 <strategy.factory>net.sf.dsig.xmldsig.XmldsigStrategyFactory</strategy.factory>
             </properties>
         </profile>
+        <profile>
+            <id>jarsigner</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-jarsigner-plugin</artifactId>
+                        <version>1.3.2</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <build>
@@ -163,17 +181,6 @@
                         <lib>${java.home}/lib/ext/sunpkcs11.jar</lib>
                     </libs>
                 </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-jarsigner-plugin</artifactId>
-                <version>1.3.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
 
