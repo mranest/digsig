@@ -178,7 +178,7 @@ DSApplet.prototype = {
 	printAppletDeclaration: function (width, height) {
 		if (BrowserDetect.browser == 'Explorer') {
 			document.write('<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-FFFF-ABCDEFFEDCBA"');
-			document.write('		codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"');
+			document.write('		codebase="' + this.protocol + '//java.sun.com/update/1.7.0/jinstall-7u55-windows-i586.cab"');
 			document.write('        width="' + width + '" height="' + height + '">');
 			document.write('	<param name="code" value="net.sf.dsig.DSApplet.class" />');
 			document.write('	<param name="codebase_lookup" value="false" />');
@@ -194,7 +194,7 @@ DSApplet.prototype = {
 		} else {
 			document.write('<embed  id="dsigApplet" code="net.sf.dsig.DSApplet.class" archive="' + this.jarUrl + '"');
 			document.write('        width="' + width + '" height="' + height + '"');
-			document.write('		type="application/x-java-applet;version=1.6"');
+			document.write('		type="application/x-java-applet;version=1.7"');
 			document.write('		codebase_lookup="false"');
 			document.write('		pluginspage="http://java.com/en/download/index.jsp"');
 			document.write('    	userAgent="' + window.navigator.userAgent + '"');
@@ -211,7 +211,7 @@ DSApplet.prototype = {
 		var innerHtml = '';
 		if (BrowserDetect.browser == 'Explorer') {
 			innerHtml += '<object id="dsigApplet" classid="clsid:CAFEEFAC-0016-0000-FFFF-ABCDEFFEDCBA"';
-			innerHtml += '		  codebase="' + this.protocol + '//java.sun.com/update/1.6.0/jinstall-6-windows-i586.cab"';
+			innerHtml += '		  codebase="' + this.protocol + '//java.sun.com/update/1.7.0/jinstall-7u55-windows-i586.cab"';
 			innerHtml += '        width="' + width + '" height="' + height + '">';
 			innerHtml += '	<param name="code" value="net.sf.dsig.DSApplet.class" />';
 			innerHtml += '	<param name="codebase_lookup" value="false" />';
@@ -227,7 +227,7 @@ DSApplet.prototype = {
 		} else {
 			innerHtml += '<embed  id="dsigApplet" code="net.sf.dsig.DSApplet.class" archive="' + this.jarUrl + '"';
 			innerHtml += '        width="' + width + '" height="' + height + '"';
-			innerHtml += '		type="application/x-java-applet;version=1.6"';
+			innerHtml += '		type="application/x-java-applet;version=1.7"';
 			innerHtml += '		codebase_lookup="false"';
 			innerHtml += '		pluginspage="http://java.com/en/download/index.jsp"';
 			innerHtml += '    	userAgent="' + window.navigator.userAgent + '"';
