@@ -16,7 +16,6 @@
 
 package net.sf.dsig;
 
-import com.sun.java.browser.dom.DOMService;
 import net.sf.dsig.helpers.KeyUsageHelper;
 import net.sf.dsig.helpers.UserHomeSettingsParser;
 import net.sf.dsig.keystores.KeyStoreProxy;
@@ -692,7 +691,7 @@ public class DSApplet extends JApplet {
         parser.setContentHandler(
                 strategy.getFormContentHandler());
         try {
-            DOMService.getService(this).invokeAndWait(parser.getParsingDOMAction());
+            parser.parse();
         } catch (Exception e) {
             handleError("DSA0005", e);
         }
