@@ -16,16 +16,7 @@
 
 package net.sf.dsig.verify;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.Security;
-import java.security.cert.X509Certificate;
-import java.util.Vector;
-
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.logging.Log;
@@ -36,20 +27,15 @@ import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERString;
 import org.bouncycastle.asn1.ocsp.OCSPObjectIdentifiers;
 import org.bouncycastle.asn1.ocsp.OCSPResponseStatus;
-import org.bouncycastle.asn1.x509.AccessDescription;
-import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.X509Extension;
-import org.bouncycastle.asn1.x509.X509Extensions;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.ocsp.BasicOCSPResp;
-import org.bouncycastle.ocsp.CertificateID;
-import org.bouncycastle.ocsp.CertificateStatus;
-import org.bouncycastle.ocsp.OCSPException;
-import org.bouncycastle.ocsp.OCSPReq;
-import org.bouncycastle.ocsp.OCSPReqGenerator;
-import org.bouncycastle.ocsp.OCSPResp;
-import org.bouncycastle.ocsp.SingleResp;
+import org.bouncycastle.ocsp.*;
+
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.Security;
+import java.security.cert.X509Certificate;
+import java.util.Vector;
 
 /**
  * A helper class that encapsulates OCSP checking logic
@@ -92,7 +78,21 @@ public class OCSPHelper {
     public void setDefaultOcspAccessLocation(String defaultOcspAccessLocation) {
         this.defaultOcspAccessLocation = defaultOcspAccessLocation;
     }
-    
+
+    // default timeout: 5sec
+    private int timeoutMillis = 5*1000;
+
+    public void setTimeoutMillis(int timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
+    // default connection timeout: 5sec
+    private int connectionManagerTimeoutMillis = 5*1000;
+
+    public void setConnectionManagerTimeoutMillis(int connectionManagerTimeoutMillis) {
+        this.connectionManagerTimeoutMillis = connectionManagerTimeoutMillis;
+    }
+
     private HostConfiguration getHostConfiguration() {
         HostConfiguration config = new HostConfiguration();
         
@@ -106,8 +106,25 @@ public class OCSPHelper {
         return config;
     }
 
-    private HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
-    
+    private HttpConnectionManager getConnectionManager() {
+        MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
+        connectionManager.getParams().setSoTimeout(timeoutMillis);
+        connectionManager.getParams().setConnectionTimeout(timeoutMillis);
+
+        return connectionManager;
+    }
+
+    private HttpClient httpClient;
+
+    private HttpClient getHttpClient() {
+        if (httpClient == null) {
+            httpClient = new HttpClient(getConnectionManager());
+            httpClient.getParams().setConnectionManagerTimeout(connectionManagerTimeoutMillis);
+        }
+
+        return httpClient;
+    }
+
     /**
      * Check with OCSP protocol whether a certificate is valid
      * 
@@ -174,7 +191,7 @@ public class OCSPHelper {
             post.setRequestHeader("Accept", "application/ocsp-response");
             post.setRequestEntity(new ByteArrayRequestEntity(req.getEncoded()));
         
-            client.executeMethod(config, post);
+            getHttpClient().executeMethod(config, post);
             
             logger.debug("HTTP POST executed" + 
                     "; authorityInfoAccessUri=" + uriAsString +

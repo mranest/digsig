@@ -16,21 +16,7 @@
 
 package net.sf.dsig.verify;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.cert.CRLException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509CRL;
-import java.security.cert.X509Certificate;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -38,11 +24,14 @@ import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.DERString;
-import org.bouncycastle.asn1.x509.CRLDistPoint;
-import org.bouncycastle.asn1.x509.DistributionPoint;
-import org.bouncycastle.asn1.x509.DistributionPointName;
-import org.bouncycastle.asn1.x509.GeneralName;
-import org.bouncycastle.asn1.x509.GeneralNames;
+import org.bouncycastle.asn1.x509.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.security.cert.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A helper class that encapsulates CRL checking logic
@@ -121,10 +110,41 @@ public class X509CRLHelper {
         return !getX509CRL(uriAsString).isRevoked(certificate);
     }
     
+    // default timeout: 5sec
+    private int timeoutMillis = 5*1000;
+
+    public void setTimeoutMillis(int timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
+    // default connection timeout: 5sec
+    private int connectionManagerTimeoutMillis = 5*1000;
+
+    public void setConnectionManagerTimeoutMillis(int connectionManagerTimeoutMillis) {
+        this.connectionManagerTimeoutMillis = connectionManagerTimeoutMillis;
+    }
+
+    private HttpConnectionManager getConnectionManager() {
+        MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
+        connectionManager.getParams().setSoTimeout(timeoutMillis);
+        connectionManager.getParams().setConnectionTimeout(timeoutMillis);
+
+        return connectionManager;
+    }
+
+    private HttpClient httpClient;
+
+    private HttpClient getHttpClient() {
+        if (httpClient == null) {
+            httpClient = new HttpClient(getConnectionManager());
+            httpClient.getParams().setConnectionManagerTimeout(connectionManagerTimeoutMillis);
+        }
+
+        return httpClient;
+    }
+
     private Object mutex = new Object();
 
-    private HttpClient client = new HttpClient(new MultiThreadedHttpConnectionManager());
-    
     /**
      * Retrieve the CRL
      * 
@@ -149,7 +169,7 @@ public class X509CRLHelper {
             
             GetMethod get = new GetMethod(distributionPointUriAsString);
             try {
-                client.executeMethod(config, get);
+                getHttpClient().executeMethod(config, get);
                 
                 logger.debug("HTTP GET executed" + 
                         "; distributionPointUri=" + distributionPointUriAsString +
